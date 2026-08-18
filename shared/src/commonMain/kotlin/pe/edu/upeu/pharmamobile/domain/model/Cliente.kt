@@ -6,4 +6,8 @@ data class Cliente(
     val correo: String,
     val telefono : String?
 
-)
+){
+    fun obtenerTelefono(): String{
+        return telefono?: "no registrado :P"
+    }
+}
