@@ -1,31 +1,39 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# PharmaMobile — Sesión 2 / Reto 02: Corrutinas y Flow en KMP
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Este paquete contiene únicamente los archivos que hay que copiar/fusionar
+dentro de tu proyecto local `PharmaMobile` (los mismos paths de `shared/src`).
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+## Cómo aplicarlo
+1. Con el proyecto cerrado en Android Studio, copia el contenido de
+   `shared/src/commonMain/kotlin/...` y `shared/src/commonTest/kotlin/...`
+   dentro de las mismas rutas de tu repo local.
+2. Copia `shared/build.gradle.kts` (reemplaza el tuyo) y agrega las líneas
+   de `libs.versions.toml` a tu `gradle/libs.versions.toml` (sección
+   `[versions]` y `[libraries]`).
+3. Sync de Gradle en Android Studio para descargar `kotlinx-coroutines-core`
+   y `kotlinx-coroutines-test`.
 
-### Running the apps
+## Archivos nuevos
+- `domain/result/ResultadoProductos.kt` — sealed class Cargando/Exito/Error (Pasos 6-8).
+- `data/repository/ProductoRepository.kt` — productos simulados, `suspend fun obtenerProductos()`,
+  `observarEstados(): Flow<String>`, `observarProductos(): Flow<List<Producto>>` (con `copy()`),
+  `cargarProductos(): Flow<ResultadoProductos>` (Pasos 3 a 17).
+- `demo/DemoAsincrono.kt` — función que ejecuta y muestra por consola cada operación.
+- `commonTest/.../demo/DemoAsincronoTest.kt` — test con `runTest` para generar la
+  evidencia de ejecución (Paso 21): corre el test y captura la salida de consola.
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+## Comandos Git sugeridos (Pasos 1 y 22)
+```
+cd C:\dev\PharmaMobile
+git status
+# ...aplicar los archivos...
+git status
+git add .
+git commit -m "feat: agregar corrutinas y flujo de productos"
+```
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
-
-### Running tests
-
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
-
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
-
----
-
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+## Pendiente de tu parte
+- Ejecutar `DemoAsincronoTest` en Android Studio y guardar la captura de
+  consola como evidencia.
+- Elaborar el informe PDF `Apellido_Nombre_Sesion02_Reto02.pdf` (indícame
+  tu apellido y nombre si quieres que te arme el documento).

@@ -2,7 +2,7 @@ package pe.edu.upeu.pharmamobile.demo
 
 import pe.edu.upeu.pharmamobile.domain.model.Cliente
 
-fun probarCliente(){
+ fun probarCliente(){
     val cliente = Cliente(
         id = 1L,
         nombre = "Farmacia Nueva Vida",
