@@ -6,11 +6,6 @@ import kotlinx.coroutines.flow.flow
 import pe.edu.upeu.pharmamobile.domain.model.Producto
 import pe.edu.upeu.pharmamobile.domain.result.ResultadoProductos
 
-/**
- * Repositorio de productos para el dominio compartido (commonMain).
- * Usa una fuente de datos simulada mientras no existe todavía una
- * capa de red o base de datos real (ver Paso 20: Arquitectura Futura).
- */
 class ProductoRepository {
 
     // Paso 3: fuente temporal de productos simulados para pruebas de dominio

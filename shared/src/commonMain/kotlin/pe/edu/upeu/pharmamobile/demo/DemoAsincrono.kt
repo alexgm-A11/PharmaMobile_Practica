@@ -4,13 +4,7 @@ import kotlinx.coroutines.flow.collect
 import pe.edu.upeu.pharmamobile.data.repository.ProductoRepository
 import pe.edu.upeu.pharmamobile.domain.result.ResultadoProductos
 
-/**
- * Ejecuta en orden las operaciones asíncronas y flujos del repositorio
- * de productos, imprimiendo cada resultado por consola.
- * Sirve como evidencia de ejecución para el Reto 02 (Pasos 20-21):
- * al correrla desde un test con runTest, la salida por consola
- * confirma la correcta emisión y recolección de los estados asíncronos.
- */
+
 suspend fun probarOperacionesAsincronas() {
     val repositorio = ProductoRepository()
 
