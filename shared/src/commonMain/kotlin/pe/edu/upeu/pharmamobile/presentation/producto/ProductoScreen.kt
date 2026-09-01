@@ -97,18 +97,19 @@ internal fun registrarProducto(
 ): RegistroProductoResultado {
     val nombreLimpio = nombre.trim()
     if (nombreLimpio.isEmpty()) {
-        return RegistroProductoResultado.Error("Ingrese nombre del producto")
+        return RegistroProductoResultado.Error("Nombre obligatorio")
     }
 
     val precio = precioTexto.trim().replace(',', '.').toDoubleOrNull()
-    if (precio == null || precio <= 0.0) {
-        return RegistroProductoResultado.Error("Ingrese precio válido")
+        ?: return RegistroProductoResultado.Error("Precio inválido")
+    if (precio <= 0.0) {
+        return RegistroProductoResultado.Error("El precio debe ser mayor a 0")
     }
 
     val stock = stockTexto.trim().toIntOrNull()
-        ?: return RegistroProductoResultado.Error("Ingrese stock válido")
+        ?: return RegistroProductoResultado.Error("Stock debe ser un número entero")
     if (stock < 0) {
-        return RegistroProductoResultado.Error("El stock no puede ser negativo")
+        return RegistroProductoResultado.Error("Stock no puede ser negativo")
     }
 
     return RegistroProductoResultado.Exito(
