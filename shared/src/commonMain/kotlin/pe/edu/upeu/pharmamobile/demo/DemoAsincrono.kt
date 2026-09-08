@@ -1,37 +1,20 @@
 package pe.edu.upeu.pharmamobile.demo
 
-import kotlinx.coroutines.flow.collect
-import pe.edu.upeu.pharmamobile.data.repository.ProductoRepository
-import pe.edu.upeu.pharmamobile.domain.result.ResultadoProductos
+import pe.edu.upeu.pharmamobile.data.repository.ProductoRepositorioEnMemoria
+import pe.edu.upeu.pharmamobile.domain.model.Producto
 
 
 suspend fun probarOperacionesAsincronas() {
-    val repositorio = ProductoRepository()
+    val repositorio = ProductoRepositorioEnMemoria()
 
     // 1) Función suspend: retorna un único valor
-    println("== suspend fun obtenerProductos() ==")
-    val productos = repositorio.obtenerProductos()
+    println("== suspend fun listar() ==")
+    val productos = repositorio.listar()
     println("Productos obtenidos: $productos")
 
-    // 2) Flow simple de estados (emit/collect)
-    println("== Flow<String> observarEstados() ==")
-    repositorio.observarEstados().collect { estado ->
-        println("Estado: $estado")
-    }
-
-    // 3) Flow de productos con actualización de inventario vía copy()
-    println("== Flow<List<Producto>> observarProductos() ==")
-    repositorio.observarProductos().collect { lista ->
-        println("Inventario emitido: $lista")
-    }
-
-    // 4) Flow integrado con sealed class ResultadoProductos
-    println("== Flow<ResultadoProductos> cargarProductos() ==")
-    repositorio.cargarProductos().collect { resultado ->
-        when (resultado) {
-            is ResultadoProductos.Cargando -> println("Cargando productos...")
-            is ResultadoProductos.Exito -> println("Éxito: ${resultado.lista}")
-            is ResultadoProductos.Error -> println("Error: ${resultado.mensaje}")
-        }
-    }
+    println("== suspend fun registrar() ==")
+    val registrado = repositorio.registrar(
+        Producto(0, "Loratadina", 10.0, 5)
+    )
+    println("Producto registrado con id asignado por repositorio: $registrado")
 }

@@ -26,11 +26,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.koin.compose.KoinContext
+import org.koin.compose.viewmodel.koinViewModel
 import pe.edu.upeu.pharmamobile.navigation.Screen
 import pe.edu.upeu.pharmamobile.navigation.tituloPantalla
 import pe.edu.upeu.pharmamobile.presentation.cliente.ClienteScreen
@@ -44,11 +47,13 @@ import pe.edu.upeu.pharmamobile.ui.theme.PharmaMobilTheme
 fun App() {
     var darkTheme by remember { mutableStateOf(false) }
 
-    PharmaMobilTheme(darkTheme = darkTheme) {
-        PharmaMobilApp(
-            darkTheme = darkTheme,
-            onDarkThemeChange = { darkTheme = it }
-        )
+    KoinContext {
+        PharmaMobilTheme(darkTheme = darkTheme) {
+            PharmaMobilApp(
+                darkTheme = darkTheme,
+                onDarkThemeChange = { darkTheme = it }
+            )
+        }
     }
 }
 
@@ -129,7 +134,18 @@ private fun PharmaMobilApp(
             ) {
                 when (pantallaActual) {
                     Screen.Inicio -> InicioScreen()
-                    Screen.Productos -> ProductoScreen()
+                    Screen.Productos -> {
+                        val viewModel = koinViewModel<pe.edu.upeu.pharmamobile.presentation.producto.ProductoViewModel>()
+                        val state by viewModel.uiState.collectAsStateWithLifecycle()
+                        ProductoScreen(
+                            state = state,
+                            onNombreChange = viewModel::cambiarNombre,
+                            onPrecioChange = viewModel::cambiarPrecio,
+                            onStockChange = viewModel::cambiarStock,
+                            onRegistrar = viewModel::guardar,
+                            onReintentar = viewModel::cargarProductos
+                        )
+                    }
                     Screen.Clientes -> ClienteScreen()
                     Screen.Pedidos -> PedidoScreen()
                 }

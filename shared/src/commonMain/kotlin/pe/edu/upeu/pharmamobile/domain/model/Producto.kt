@@ -5,5 +5,11 @@ data class Producto(
     val nombre: String,
     val precio: Double,
     val stock: Int
+) {
+    val requiereReposicion: Boolean
+        get() = stock < STOCK_MINIMO
 
-)
+    companion object {
+        const val STOCK_MINIMO = 10
+    }
+}
