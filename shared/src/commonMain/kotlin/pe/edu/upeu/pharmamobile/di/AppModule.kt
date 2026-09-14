@@ -6,19 +6,36 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import pe.edu.upeu.pharmamobile.data.repository.ProductoRepositorioEnMemoria
+import pe.edu.upeu.pharmamobile.data.repository.ClienteRepositorioEnMemoria
+import pe.edu.upeu.pharmamobile.domain.repository.ClienteRepository
 import pe.edu.upeu.pharmamobile.domain.repository.ProductoRepository
+import pe.edu.upeu.pharmamobile.domain.usecase.ListarClientesUseCase
+import pe.edu.upeu.pharmamobile.domain.usecase.ListarProductosUseCase
+import pe.edu.upeu.pharmamobile.domain.usecase.RegistrarClienteUseCase
 import pe.edu.upeu.pharmamobile.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobile.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobile.presentation.producto.ProductoViewModel
 
-val repositorioModule = module { single<ProductoRepository> { ProductoRepositorioEnMemoria() } }
-val casoUsoModule = module { factory { RegistrarProductoUseCase(get()) } }
-val presentacionModule = module { viewModel { ProductoViewModel(get(), get()) } }
+val dataModule = module {
+    single<ProductoRepository> { ProductoRepositorioEnMemoria() }
+    single<ClienteRepository> { ClienteRepositorioEnMemoria() }
+}
+val domainModule = module {
+    factory { RegistrarProductoUseCase(get()) }
+    factory { ListarProductosUseCase(get()) }
+    factory { RegistrarClienteUseCase(get()) }
+    factory { ListarClientesUseCase(get()) }
+}
+val presentationModule = module {
+    viewModel { ProductoViewModel(get(), get()) }
+    viewModel { ClienteViewModel(get(), get()) }
+}
 
 expect val platformModule: Module
 
 fun initKoin(config: KoinApplication.() -> Unit = {}): KoinApplication = startKoin {
     config()
-    modules(repositorioModule, casoUsoModule, presentacionModule, platformModule)
+    modules(dataModule, domainModule, presentationModule, platformModule)
 }
 
 fun initKoinIos(): KoinApplication = initKoin()

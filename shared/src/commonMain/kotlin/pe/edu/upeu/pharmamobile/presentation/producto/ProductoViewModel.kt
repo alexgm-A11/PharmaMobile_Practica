@@ -6,12 +6,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import pe.edu.upeu.pharmamobile.domain.repository.ProductoRepository
+import pe.edu.upeu.pharmamobile.domain.usecase.CampoProducto
+import pe.edu.upeu.pharmamobile.domain.usecase.ListarProductosUseCase
 import pe.edu.upeu.pharmamobile.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobile.domain.usecase.ValidacionProductoException
 
 class ProductoViewModel(
     private val registrarProducto: RegistrarProductoUseCase,
-    private val repository: ProductoRepository
+    private val listarProductos: ListarProductosUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProductoUiState())
     val uiState = _uiState.asStateFlow()
@@ -26,25 +28,9 @@ class ProductoViewModel(
 
     fun guardar() {
         val formulario = _uiState.value.formulario
-        val validado = formulario.copy(
-            errorNombre = if (formulario.nombre.isBlank()) "Nombre obligatorio" else null,
-            errorPrecio = when {
-                formulario.precio.replace(',', '.').toDoubleOrNull() == null -> "Precio inválido"
-                formulario.precio.replace(',', '.').toDouble() <= 0 -> "El precio debe ser mayor a 0"
-                else -> null
-            },
-            errorStock = when {
-                formulario.stock.toIntOrNull() == null -> "Stock debe ser un número entero"
-                formulario.stock.toInt() < 0 -> "Stock no puede ser negativo"
-                else -> null
-            }
-        )
-        _uiState.update { it.copy(formulario = validado, mensaje = null) }
-        if (listOf(validado.errorNombre, validado.errorPrecio, validado.errorStock).any { it != null }) return
-
         viewModelScope.launch {
-            _uiState.update { it.copy(guardando = true) }
-            registrarProducto(validado.nombre, validado.precio, validado.stock)
+            _uiState.update { it.copy(guardando = true, mensaje = null) }
+            registrarProducto(formulario.nombre, formulario.precio, formulario.stock)
                 .onSuccess { producto ->
                     _uiState.update {
                         it.copy(
@@ -56,7 +42,18 @@ class ProductoViewModel(
                     cargarProductos()
                 }
                 .onFailure { error ->
-                    _uiState.update { it.copy(guardando = false, mensaje = error.message) }
+                    val validacion = error as? ValidacionProductoException
+                    _uiState.update {
+                        it.copy(
+                            guardando = false,
+                            formulario = it.formulario.copy(
+                                errorNombre = error.message.takeIf { validacion?.campo == CampoProducto.NOMBRE },
+                                errorPrecio = error.message.takeIf { validacion?.campo == CampoProducto.PRECIO },
+                                errorStock = error.message.takeIf { validacion?.campo == CampoProducto.STOCK }
+                            ),
+                            mensaje = error.message.takeIf { validacion == null }
+                        )
+                    }
                 }
         }
     }
@@ -64,12 +61,12 @@ class ProductoViewModel(
     fun cargarProductos() {
         viewModelScope.launch {
             _uiState.update { it.copy(fase = ProductoFase.Cargando) }
-            runCatching { repository.listar() }
+            runCatching { listarProductos() }
                 .onSuccess { productos ->
                     _uiState.update {
                         it.copy(
                             fase = if (productos.isEmpty()) ProductoFase.SinProductos
-                            else ProductoFase.ConProductos(productos)
+                            else ProductoFase.ConProductos(productos.map(ProductoUi::from))
                         )
                     }
                 }

@@ -146,7 +146,18 @@ private fun PharmaMobilApp(
                             onReintentar = viewModel::cargarProductos
                         )
                     }
-                    Screen.Clientes -> ClienteScreen()
+                    Screen.Clientes -> {
+                        val viewModel = koinViewModel<pe.edu.upeu.pharmamobile.presentation.cliente.ClienteViewModel>()
+                        val state by viewModel.uiState.collectAsStateWithLifecycle()
+                        ClienteScreen(
+                            state = state,
+                            onNombreChange = viewModel::cambiarNombre,
+                            onCorreoChange = viewModel::cambiarCorreo,
+                            onTelefonoChange = viewModel::cambiarTelefono,
+                            onRegistrar = viewModel::guardar,
+                            onReintentar = viewModel::cargarClientes
+                        )
+                    }
                     Screen.Pedidos -> PedidoScreen()
                 }
             }
