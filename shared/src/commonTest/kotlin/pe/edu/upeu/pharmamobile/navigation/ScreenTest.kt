@@ -6,9 +6,9 @@ import kotlin.test.assertEquals
 class ScreenTest {
 
     @Test
-    fun contieneLosCuatroDestinosEnOrden() {
+    fun contieneLosCincoDestinosEnOrden() {
         assertEquals(
-            listOf("Inicio", "Productos", "Clientes", "Pedidos"),
+            listOf("Inicio", "Productos", "Catálogo REST", "Clientes", "Pedidos"),
             Screen.destinos.map(::tituloPantalla)
         )
     }

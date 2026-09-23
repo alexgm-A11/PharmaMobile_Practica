@@ -37,6 +37,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import pe.edu.upeu.pharmamobile.navigation.Screen
 import pe.edu.upeu.pharmamobile.navigation.tituloPantalla
 import pe.edu.upeu.pharmamobile.presentation.cliente.ClienteScreen
+import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoScreen
+import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoViewModel
 import pe.edu.upeu.pharmamobile.presentation.inicio.InicioScreen
 import pe.edu.upeu.pharmamobile.presentation.pedido.PedidoScreen
 import pe.edu.upeu.pharmamobile.presentation.producto.ProductoScreen
@@ -145,6 +147,11 @@ private fun PharmaMobilApp(
                             onRegistrar = viewModel::guardar,
                             onReintentar = viewModel::cargarProductos
                         )
+                    }
+                    Screen.Catalogo -> {
+                        val viewModel = koinViewModel<CatalogoViewModel>()
+                        val state by viewModel.uiState.collectAsStateWithLifecycle()
+                        CatalogoScreen(state, viewModel::cambiarId, viewModel::buscarId, viewModel::cargar, viewModel::probarTimeout, viewModel::probarJson)
                     }
                     Screen.Clientes -> {
                         val viewModel = koinViewModel<pe.edu.upeu.pharmamobile.presentation.cliente.ClienteViewModel>()
