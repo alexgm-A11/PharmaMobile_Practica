@@ -1,5 +1,20 @@
 # PharmaMobile — Sesión 2 / Reto 02: Corrutinas y Flow en KMP
 
+## Capacidades nativas (Sesión 9)
+
+La rama local `feature/expect-actual-guillen` añade dos capacidades nativas sin importar clases de Android ni UIKit desde `presentation`:
+
+| Capacidad | Código compartido | Android | iOS |
+| --- | --- | --- | --- |
+| Moneda peruana | `platform/Formato.kt` declara `expect fun formatearSoles(Double)`; `presentation/producto/ProductoUiState.kt` la usa al convertir `Producto` en `ProductoUi`. | `platform/Formato.android.kt` usa `NumberFormat` con `es-PE`. | `platform/Formato.ios.kt` usa `NSNumberFormatter` con `es_PE`. |
+| Compartir producto | `domain/platform/Compartidor.kt` declara la interfaz; `domain/usecase/TextoParaCompartir.kt` arma nombre, precio y stock. `presentation/detalle` expone la acción. | `platform/CompartidorAndroid.kt` abre el selector `ACTION_SEND` con `FLAG_ACTIVITY_NEW_TASK`; `di/PlatformModule.android.kt` registra la implementación con Koin. | `platform/CompartidorIos.kt` presenta `UIActivityViewController`; `di/PlatformModule.ios.kt` registra la implementación. |
+
+Desde **Productos**, toca `DETALLE` en un artículo y luego `Compartir`. Este detalle usa el inventario local porque es el único producto de este checkout que tiene `stock`. El catálogo REST de la sesión 7 usa la API pública de Platzi y no trae stock; no se mezcló con el inventario ni se inventaron existencias. La guía 09 presupone el CRUD de PharmaSoft de la sesión 8, todavía no integrado en esta rama.
+
+La función `expect` y sus dos `actual` tienen exactamente el mismo paquete y la misma firma. El `Compartidor` se inyecta en `DetalleProductoViewModel`: es reemplazable en pruebas, mientras Compose solo recibe un callback. `MainApplication` proporciona `androidContext` a Koin. La interfaz Swift existente importa `Shared` y llama a `MainViewControllerKt.MainViewController()` y `AppModuleKt.initKoinIos()`.
+
+Verificación local: `./gradlew.bat :shared:testAndroidHostTest :androidApp:assembleDebug :shared:compileKotlinIosSimulatorArm64`. La compilación del código compartido iOS en Windows no acredita que el selector nativo funcione en un simulador: la captura iOS y la ejecución de Xcode requieren macOS. Consulta `docs/S09_CAPACIDADES_NATIVAS.md` para cotejo, diferencias y evidencias disponibles.
+
 ## Conectividad REST (Sesión 7)
 
 El proyecto ahora incluye una pantalla independiente **Catálogo REST** en el menú lateral. Consulta productos reales de la API pública de práctica de Platzi mediante Ktor, sin sustituir el inventario local ni asignar un stock ficticio a los datos remotos. La URL base es `https://api.escuelajs.co/api/v1` (versión `v1`).
