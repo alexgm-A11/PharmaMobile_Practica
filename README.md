@@ -1,4 +1,6 @@
-# PharmaMobile — Sesión 2 / Reto 02: Corrutinas y Flow en KMP
+# PharmaMobile_Practica — Kotlin Multiplatform
+
+Aplicación de práctica con Android e iOS. El código común contiene inicio, productos del inventario local, clientes, pedidos demostrativos y catálogo REST separado. El proyecto usa Compose Multiplatform, Clean + MVVM, Koin, corrutinas y Ktor.
 
 ## Capacidades nativas (Sesión 9)
 
@@ -30,42 +32,15 @@ Para ejecutar en Android, abre este proyecto en Android Studio y ejecuta `androi
 
 La API es pública y mutable: sus productos y códigos de error pueden variar. En la comprobación del 22/09/2026, un ID inexistente respondió HTTP 400, aunque la actividad propone 404. La interfaz controla ambos códigos.
 
----
+## Estructura y ejecución
 
-Este paquete contiene únicamente los archivos que hay que copiar/fusionar
-dentro de tu proyecto local `PharmaMobile` (los mismos paths de `shared/src`).
+- `shared/src/commonMain`: modelos, contratos, casos de uso, datos comunes, ViewModels, pantallas Compose, navegación y módulos Koin.
+- `shared/src/androidMain` y `shared/src/iosMain`: implementaciones nativas de formato y compartir, junto con los `platformModule`.
+- `androidApp` y `iosApp`: puntos de entrada específicos de cada sistema operativo.
+- `shared/src/commonTest`: pruebas de reglas de negocio, API con MockEngine y capacidades nativas.
 
-## Cómo aplicarlo
-1. Con el proyecto cerrado en Android Studio, copia el contenido de
-   `shared/src/commonMain/kotlin/...` y `shared/src/commonTest/kotlin/...`
-   dentro de las mismas rutas de tu repo local.
-2. Copia `shared/build.gradle.kts` (reemplaza el tuyo) y agrega las líneas
-   de `libs.versions.toml` a tu `gradle/libs.versions.toml` (sección
-   `[versions]` y `[libraries]`).
-3. Sync de Gradle en Android Studio para descargar `kotlinx-coroutines-core`
-   y `kotlinx-coroutines-test`.
+Abre esta carpeta en Android Studio y ejecuta `androidApp`. Para iOS se necesita macOS y Xcode con `iosApp`. En Windows se puede compilar el código compartido iOS, pero no ejecutar el simulador. Para verificar localmente: `./gradlew.bat :shared:testAndroidHostTest :androidApp:assembleDebug :shared:compileKotlinIosSimulatorArm64`.
 
-## Archivos nuevos
-- `domain/result/ResultadoProductos.kt` — sealed class Cargando/Exito/Error (Pasos 6-8).
-- `data/repository/ProductoRepository.kt` — productos simulados, `suspend fun obtenerProductos()`,
-  `observarEstados(): Flow<String>`, `observarProductos(): Flow<List<Producto>>` (con `copy()`),
-  `cargarProductos(): Flow<ResultadoProductos>` (Pasos 3 a 17).
-- `demo/DemoAsincrono.kt` — función que ejecuta y muestra por consola cada operación.
-- `commonTest/.../demo/DemoAsincronoTest.kt` — test con `runTest` para generar la
-  evidencia de ejecución (Paso 21): corre el test y captura la salida de consola.
+## Estado conocido
 
-## Comandos Git sugeridos (Pasos 1 y 22)
-```
-cd C:\dev\PharmaMobile
-git status
-# ...aplicar los archivos...
-git status
-git add .
-git commit -m "feat: agregar corrutinas y flujo de productos"
-```
-
-## Pendiente de tu parte
-- Ejecutar `DemoAsincronoTest` en Android Studio y guardar la captura de
-  consola como evidencia.
-- Elaborar el informe PDF `Apellido_Nombre_Sesion02_Reto02.pdf` (indícame
-  tu apellido y nombre si quieres que te arme el documento).
+El inventario local permite registrar/listar productos y clientes. Pedidos contiene únicamente modelos y una pantalla demostrativa; no hay CRUD de pedidos. El catálogo REST de Platzi solo ofrece lectura (GET listado y detalle). El CRUD de PharmaSoft, autenticación JWT y persistencia offline-first aún no están integrados en esta rama. Las capacidades nativas S09 se desarrollaron sobre el detalle de producto local. La rama no se ha publicado desde esta tarea.
