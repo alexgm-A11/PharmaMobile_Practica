@@ -21,6 +21,7 @@ import pe.edu.upeu.pharmamobile.domain.usecase.RegistrarProductoUseCase
 import pe.edu.upeu.pharmamobile.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoViewModel
 import pe.edu.upeu.pharmamobile.presentation.producto.ProductoViewModel
+import pe.edu.upeu.pharmamobile.presentation.detalle.DetalleProductoViewModel
 
 val dataModule = module {
     single { crearClienteProductos() }
@@ -39,6 +40,7 @@ val domainModule = module {
 val presentationModule = module {
     viewModel { CatalogoViewModel(get(), get()) }
     viewModel { ProductoViewModel(get(), get()) }
+    viewModel { DetalleProductoViewModel(get(), get()) }
     viewModel { ClienteViewModel(get(), get()) }
 }
 

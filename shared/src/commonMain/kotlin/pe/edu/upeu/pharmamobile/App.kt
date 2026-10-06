@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +40,8 @@ import pe.edu.upeu.pharmamobile.navigation.tituloPantalla
 import pe.edu.upeu.pharmamobile.presentation.cliente.ClienteScreen
 import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoScreen
 import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoViewModel
+import pe.edu.upeu.pharmamobile.presentation.detalle.DetalleProductoScreen
+import pe.edu.upeu.pharmamobile.presentation.detalle.DetalleProductoViewModel
 import pe.edu.upeu.pharmamobile.presentation.inicio.InicioScreen
 import pe.edu.upeu.pharmamobile.presentation.pedido.PedidoScreen
 import pe.edu.upeu.pharmamobile.presentation.producto.ProductoScreen
@@ -122,8 +125,11 @@ private fun PharmaMobilApp(
                 TopAppBar(
                     title = { Text(tituloPantalla(pantallaActual)) },
                     navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Text("☰", style = MaterialTheme.typography.titleLarge)
+                        IconButton(onClick = {
+                            if (pantallaActual is Screen.DetalleProducto) pantallaActual = Screen.Productos
+                            else scope.launch { drawerState.open() }
+                        }) {
+                            Text(if (pantallaActual is Screen.DetalleProducto) "←" else "☰", style = MaterialTheme.typography.titleLarge)
                         }
                     }
                 )
@@ -145,7 +151,8 @@ private fun PharmaMobilApp(
                             onPrecioChange = viewModel::cambiarPrecio,
                             onStockChange = viewModel::cambiarStock,
                             onRegistrar = viewModel::guardar,
-                            onReintentar = viewModel::cargarProductos
+                            onReintentar = viewModel::cargarProductos,
+                            onDetalle = { pantallaActual = Screen.DetalleProducto(it) }
                         )
                     }
                     Screen.Catalogo -> {
@@ -166,6 +173,14 @@ private fun PharmaMobilApp(
                         )
                     }
                     Screen.Pedidos -> PedidoScreen()
+                    is Screen.DetalleProducto -> {
+                        val viewModel = koinViewModel<DetalleProductoViewModel>()
+                        val state by viewModel.uiState.collectAsStateWithLifecycle()
+                        LaunchedEffect((pantallaActual as Screen.DetalleProducto).id) {
+                            viewModel.cargar((pantallaActual as Screen.DetalleProducto).id)
+                        }
+                        DetalleProductoScreen(state, viewModel::compartir)
+                    }
                 }
             }
         }

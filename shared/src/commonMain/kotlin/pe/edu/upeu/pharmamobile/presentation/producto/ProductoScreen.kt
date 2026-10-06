@@ -13,6 +13,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +30,8 @@ fun ProductoScreen(
     onPrecioChange: (String) -> Unit,
     onStockChange: (String) -> Unit,
     onRegistrar: () -> Unit,
-    onReintentar: () -> Unit
+    onReintentar: () -> Unit,
+    onDetalle: (Long) -> Unit
 ) {
     val formulario = state.formulario
     Column(
@@ -70,6 +72,7 @@ fun ProductoScreen(
                     if (producto.requiereReposicion) {
                         Text("REPONER", color = MaterialTheme.colorScheme.error)
                     }
+                    TextButton(onClick = { onDetalle(producto.id) }) { Text("DETALLE") }
                 }
                 HorizontalDivider()
             }

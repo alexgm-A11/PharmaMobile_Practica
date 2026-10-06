@@ -6,6 +6,7 @@ sealed class Screen(val titulo: String) {
     data object Catalogo : Screen("Catálogo REST")
     data object Clientes : Screen("Clientes")
     data object Pedidos : Screen("Pedidos")
+    data class DetalleProducto(val id: Long) : Screen("Detalle del producto")
 
     companion object {
         val destinos: List<Screen>
