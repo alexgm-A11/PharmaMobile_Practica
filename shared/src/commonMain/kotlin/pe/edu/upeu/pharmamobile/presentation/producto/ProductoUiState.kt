@@ -1,6 +1,7 @@
 package pe.edu.upeu.pharmamobile.presentation.producto
 
 import pe.edu.upeu.pharmamobile.domain.model.Producto
+import pe.edu.upeu.pharmamobile.platform.formatearSoles
 
 sealed interface ProductoFase {
     data object Cargando : ProductoFase
@@ -18,9 +19,10 @@ data class ProductoUi(
 ) {
     companion object {
         fun from(producto: Producto): ProductoUi {
-            val centimos = (producto.precio * 100 + 0.5).toLong()
-            val precio = "S/ ${centimos / 100}.${(centimos % 100).toString().padStart(2, '0')}"
-            return ProductoUi(producto.id, producto.nombre, precio, producto.stock, producto.requiereReposicion)
+            return ProductoUi(
+                producto.id, producto.nombre, formatearSoles(producto.precio),
+                producto.stock, producto.requiereReposicion
+            )
         }
     }
 }
