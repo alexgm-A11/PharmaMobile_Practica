@@ -1,6 +1,6 @@
 # PharmaSoft local para PharmaMobile
 
-El backend Spring Boot y Oracle Free se ejecutan con Docker Compose. Flyway crea el esquema desde V1, aplica la seguridad de V2/V3 y carga tres categorias iniciales en V4 para que el formulario de productos tenga opciones. Las migraciones originales del RAR no se copiaron: la version V2 del repositorio oficial ya corrige su linea SQL invalida y aporta tambien el codigo JWT.
+El backend Spring Boot y Oracle Free se ejecutan con Docker Compose. La imagen oficial de Oracle crea el usuario `PHARMADB` mediante `docker/oracle/01_create_user.sh` al arrancar si aun no existe. Flyway crea el esquema desde V1, aplica la seguridad de V2/V3 y carga tres categorias iniciales en V4 para que el formulario de productos tenga opciones. Las migraciones originales del RAR no se copiaron: la version V2 del repositorio oficial ya corrige su linea SQL invalida y aporta tambien el codigo JWT.
 
 ## Inicio
 
@@ -27,4 +27,4 @@ Primero, `GET /api/v1/productos` sin token debe devolver 401. `POST /api/v1/auth
 
 ## Estado de verificacion en este equipo
 
-El proyecto Maven compila, 22 pruebas unitarias de seguridad/productos/ventas pasan y la definicion de Compose pasa `docker compose config --quiet`. La prueba `PharmaBackendApplicationTests.contextLoads` no puede ejecutarse sin Oracle; falla por ausencia de listener en `localhost:1522`, no por compilacion. Docker Desktop, sin embargo, informa `Status: stopped` y su backend registra `hasNoVirtualization: true`; `wsl -l -v` no lista ninguna distribucion. Por ello no se pudo crear el contenedor Oracle ni ejecutar Flyway o la matriz HTTP real en este equipo. Antes de usar `docker compose up`, hay que reparar/habilitar el motor Linux de Docker Desktop y WSL 2; puede requerir permisos de administrador y reiniciar Windows.
+Tras reiniciar Windows, Docker Desktop y WSL 2 funcionan. Se levantaron Oracle y el backend con Compose; Oracle quedo saludable y Flyway aplico V1-V4. La comprobacion HTTP real dio: salud 200, productos sin token 401, login de `admin` con token, `GET /auth/me` con `admin`, productos autorizados 200, tres categorias y clientes con rol `almacen` 403. Tambien se creo (201), consulto (200) y elimino (204) un producto temporal. El volumen `oracle_data` conservo las cuatro migraciones, las tres categorias y el login al recrear Oracle. `mvnw.cmd test` paso completo contra esa base.
