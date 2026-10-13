@@ -36,7 +36,7 @@ class AuthPharmaSoftTest {
     }
 
     private val jsonLogin = """{"token":"jwt-secreto","tipo":"Bearer","expiraEnSegundos":3600,"username":"admin","nombreCompleto":"Carlos Ramírez","roles":["ADMIN"],"permisos":["CATALOGO_LEER","CATALOGO_ESCRIBIR","CLIENTES_LEER"]}"""
-    private val jsonMe = """{"username":"admin","nombreCompleto":"Carlos Ramírez","roles":["ADMIN"],"permisos":["CATALOGO_LEER","CLIENTES_LEER"]}"""
+    private val jsonMe = """{"id":1,"username":"admin","empleadoId":1,"empleadoNombre":"Carlos Ramírez","cargo":"Administrador","roles":["ADMIN"],"permisos":["CATALOGO_LEER","CLIENTES_LEER"],"estado":true,"fechaCreacion":"2026-10-13T10:00:00"}"""
     private val cabeceras = headersOf(HttpHeaders.ContentType, "application/json")
 
     @Test
@@ -60,7 +60,9 @@ class AuthPharmaSoftTest {
             val sesion = repo.iniciarSesion(Credenciales("admin", "Admin123"))
             assertTrue(sesion.puede(Permisos.CATALOGO_ESCRIBIR))
             assertEquals("jwt-secreto", almacen.token)
-            assertEquals("admin", repo.sesionGuardada()?.usuario)
+            val recuperada = repo.sesionGuardada()
+            assertEquals("admin", recuperada?.usuario)
+            assertEquals("Carlos Ramírez", recuperada?.nombreCompleto)
             assertEquals(listOf("/api/v1/auth/login", "/api/v1/auth/me"), rutas)
             assertEquals(listOf(null, "Bearer jwt-secreto"), autorizaciones)
             repo.cerrarSesion()

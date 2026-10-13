@@ -35,9 +35,9 @@ Los permisos se usan para ocultar secciones y botones. `CATALOGO_LEER` permite v
 
 La colección Postman proporcionada contiene 63 solicitudes: login correcto e incorrecto, tokens ausentes, malformados, alterados o expirados, la matriz de permisos de ADMIN/VENDEDOR/ALMACENERO, exposición de datos y CORS. Su variable `baseUrl` es `http://localhost:8080` para ejecución en el equipo anfitrión; en el emulador Android se usa `10.0.2.2`. Los valores de token de la colección están vacíos hasta ejecutar sus flujos de login. No se incorporaron tokens ni contraseñas reales al código.
 
-El RAR contiene solo dos migraciones del servidor: `V2__seguridad_empleados_usuarios.sql` define empleados, roles, usuarios y la relación usuario-rol; `V3__datos_iniciales_seguridad.sql` carga empleados y usuarios de prueba con contraseñas BCrypt. **No es una base de datos móvil ni contiene el código Java de JWT.** La segunda línea de V2 es `BD SEGURIDAD` sin prefijo de comentario SQL; tal como está, esa línea provocaría un error de sintaxis al aplicar Flyway. Hay que corregirla en el proyecto backend antes de ejecutar la migración, sin alterar el RAR original.
+El RAR contiene solo dos migraciones del servidor: `V2__seguridad_empleados_usuarios.sql` define empleados, roles, usuarios y la relación usuario-rol; `V3__datos_iniciales_seguridad.sql` carga empleados y usuarios de prueba con contraseñas BCrypt. **No es una base de datos móvil ni contiene el código Java de JWT.** La segunda línea de V2 del RAR es `BD SEGURIDAD` sin prefijo de comentario SQL; tal como está, provocaría un error de sintaxis. El repositorio original actualizado de PharmaSoft ya incluye una V2 corregida, V3 y toda la implementación de seguridad; se usó esa versión sin modificar el RAR.
 
-La carpeta local `C:\Users\alexg\AndroidStudioProjects\pharmaSoft` examinada trae V1 y controladores CRUD, pero no `AuthController`, filtro JWT, configuración de Spring Security ni V2/V3. `http://localhost:8080/api/health` no respondió durante esta tarea. Por ello no se declara que el login ni la matriz real de roles estén verificados contra ese backend. Para una prueba integrada se necesita una versión de PharmaSoft que implemente el contrato de la guía, Oracle disponible y V2/V3 corregidas y aplicadas.
+La carpeta local `C:\Users\alexg\AndroidStudioProjects\pharmaSoft` se actualizó por avance rápido a la revisión de seguridad del repositorio original. Contiene `AuthController`, filtro JWT, reglas de Spring Security y V1/V2/V3; además se prepararon `compose.yaml`, un perfil `container` y V4 con categorías iniciales. Se corrigió su configuración de CORS para proveer explícitamente el bean que requiere `SecurityConfig`. La respuesta real de `/auth/me` usa `empleadoNombre`, no `nombreCompleto`, y el DTO móvil ahora la mapea. La prueba integrada sigue pendiente porque Docker Desktop informa motor Linux detenido (`hasNoVirtualization: true`) y no pudo iniciar Oracle.
 
 ## Verificación ejecutada
 
@@ -45,11 +45,11 @@ Comando: `./gradlew.bat :shared:testAndroidHostTest :androidApp:assembleDebug :s
 
 Las pruebas con MockEngine verifican: login sin token y sin reintento ante 401 aunque exista uno viejo, Bearer en la primera petición posterior, recuperación de sesión, logout, 401 protegido que borra token, 403 que lo conserva, credenciales inválidas, saneamiento del log y GET/POST/PUT/DELETE autenticados de productos/clientes. Las pruebas de navegación comprueban que `almacen` no ve clientes ni ventas. El conjunto de pruebas de host Android terminó correctamente. El APK `debug` y el Kotlin compartido para iOS compilaron.
 
-En total pasaron 28 pruebas. El APK se instaló y abrió en un emulador Pixel 6 sin excepción de arranque. Esto no valida el inicio de sesión ni las operaciones REST reales, porque el backend JWT no estaba disponible.
+En total pasaron 28 pruebas, incluyendo el contrato corregido de `/auth/me`. El APK se instaló y abrió en un emulador Pixel 6 sin excepción de arranque. Esto no valida el inicio de sesión ni las operaciones REST reales: el motor de contenedores no estuvo disponible.
 
 ## Pendiente para la evidencia de la guía
 
-- Iniciar una versión del backend con `/api/v1/auth/login`, `/api/v1/auth/me` y seguridad por permisos; aplicar sus migraciones en Oracle.
+- Habilitar/reparar Docker Desktop y WSL 2, luego ejecutar `docker compose up --build -d` en `pharmaSoft`. Flyway debe aplicar V1-V4 y levantar `/api/v1/auth/login` y `/api/v1/auth/me`.
 - Ejecutar la colección Postman y conservar capturas de 401 sin token, 200 con admin y 403 de `almacen` al consultar clientes.
 - Ejecutar la app en emulador Android y simulador iOS con ese backend, verificar persistencia tras reinicio y capturar login, CRUD, 403 y log con `Authorization: ***`.
 - El RAR no se debe copiar a `shared/src`: pertenece a Flyway del servidor. La ejecución iOS requiere macOS/Xcode; compilar el source set desde Windows no demuestra el Keychain en funcionamiento.
