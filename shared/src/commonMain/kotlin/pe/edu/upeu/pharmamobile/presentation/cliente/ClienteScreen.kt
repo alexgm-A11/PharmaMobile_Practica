@@ -28,7 +28,8 @@ fun ClienteScreen(
     onCorreoChange: (String) -> Unit,
     onTelefonoChange: (String) -> Unit,
     onRegistrar: () -> Unit,
-    onReintentar: () -> Unit
+    onReintentar: () -> Unit,
+    puedeRegistrar: Boolean = true
 ) {
     val formulario = state.formulario
     Column(
@@ -36,16 +37,18 @@ fun ClienteScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("PHARMAMOBIL", style = MaterialTheme.typography.headlineMedium)
-        Text("Registro de Cliente", style = MaterialTheme.typography.titleLarge)
-        ValidatedTextField(formulario.nombre, onNombreChange, "Nombre", formulario.errorNombre)
-        ValidatedTextField(formulario.correo, onCorreoChange, "Correo", formulario.errorCorreo, KeyboardType.Email)
-        ValidatedTextField(formulario.telefono, onTelefonoChange, "Teléfono (opcional)", formulario.errorTelefono, KeyboardType.Phone)
-        Button(onClick = onRegistrar, enabled = !state.guardando, modifier = Modifier.fillMaxWidth()) {
-            Text(if (state.guardando) "REGISTRANDO..." else "REGISTRAR")
+        if (puedeRegistrar) {
+            Text("Registro de Cliente", style = MaterialTheme.typography.titleLarge)
+            ValidatedTextField(formulario.nombre, onNombreChange, "Nombre", formulario.errorNombre)
+            ValidatedTextField(formulario.correo, onCorreoChange, "Correo", formulario.errorCorreo, KeyboardType.Email)
+            ValidatedTextField(formulario.telefono, onTelefonoChange, "Teléfono (opcional)", formulario.errorTelefono, KeyboardType.Phone)
+            Button(onClick = onRegistrar, enabled = !state.guardando, modifier = Modifier.fillMaxWidth()) {
+                Text(if (state.guardando) "REGISTRANDO..." else "REGISTRAR")
+            }
         }
         state.mensaje?.let { MensajeExito(it) }
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-        Text("Clientes registrados", style = MaterialTheme.typography.titleLarge)
+        Text("Clientes locales de demostración", style = MaterialTheme.typography.titleLarge)
         when (val fase = state.fase) {
             ClienteFase.Cargando -> Row(
                 modifier = Modifier.fillMaxWidth(),

@@ -37,6 +37,7 @@ import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
 import pe.edu.upeu.pharmamobile.navigation.Screen
 import pe.edu.upeu.pharmamobile.navigation.tituloPantalla
+import pe.edu.upeu.pharmamobile.navigation.destinosPermitidos
 import pe.edu.upeu.pharmamobile.presentation.cliente.ClienteScreen
 import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoScreen
 import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoViewModel
@@ -45,6 +46,15 @@ import pe.edu.upeu.pharmamobile.presentation.detalle.DetalleProductoViewModel
 import pe.edu.upeu.pharmamobile.presentation.inicio.InicioScreen
 import pe.edu.upeu.pharmamobile.presentation.pedido.PedidoScreen
 import pe.edu.upeu.pharmamobile.presentation.producto.ProductoScreen
+import pe.edu.upeu.pharmamobile.domain.model.Permisos
+import pe.edu.upeu.pharmamobile.presentation.sesion.LoginScreen
+import pe.edu.upeu.pharmamobile.presentation.sesion.SesionViewModel
+import pe.edu.upeu.pharmamobile.presentation.sesion.UsuarioSesionUi
+import androidx.compose.material3.TextButton
+import pe.edu.upeu.pharmamobile.presentation.pharmasoft.ProductosServidorScreen
+import pe.edu.upeu.pharmamobile.presentation.pharmasoft.ProductosServidorViewModel
+import pe.edu.upeu.pharmamobile.presentation.pharmasoft.ClientesServidorScreen
+import pe.edu.upeu.pharmamobile.presentation.pharmasoft.ClientesServidorViewModel
 import pe.edu.upeu.pharmamobile.ui.theme.PharmaMobilTheme
 
 @Composable
@@ -54,10 +64,25 @@ fun App() {
 
     KoinContext {
         PharmaMobilTheme(darkTheme = darkTheme) {
-            PharmaMobilApp(
-                darkTheme = darkTheme,
-                onDarkThemeChange = { darkTheme = it }
-            )
+            val sesionViewModel = koinViewModel<SesionViewModel>()
+            val sesionState by sesionViewModel.uiState.collectAsStateWithLifecycle()
+            val usuario = sesionState.sesion
+            if (usuario == null) {
+                LoginScreen(
+                    state = sesionState,
+                    onUsuarioChange = sesionViewModel::cambiarUsuario,
+                    onClaveChange = sesionViewModel::cambiarClave,
+                    onIniciar = sesionViewModel::iniciar,
+                    onReintentar = sesionViewModel::recuperar
+                )
+            } else {
+                PharmaMobilApp(
+                    darkTheme = darkTheme,
+                    onDarkThemeChange = { darkTheme = it },
+                    usuario = usuario,
+                    onCerrarSesion = sesionViewModel::cerrar
+                )
+            }
         }
     }
 }
@@ -66,7 +91,9 @@ fun App() {
 @Composable
 private fun PharmaMobilApp(
     darkTheme: Boolean,
-    onDarkThemeChange: (Boolean) -> Unit
+    onDarkThemeChange: (Boolean) -> Unit,
+    usuario: UsuarioSesionUi,
+    onCerrarSesion: () -> Unit
 ) {
     var pantallaActual by remember { mutableStateOf<Screen>(Screen.Inicio) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -84,7 +111,7 @@ private fun PharmaMobilApp(
                 )
                 HorizontalDivider()
 
-                Screen.destinos.forEach { destino ->
+                destinosPermitidos(usuario.permisos).forEach { destino ->
                     NavigationDrawerItem(
                         label = { Text(destino.titulo) },
                         selected = pantallaActual == destino,
@@ -97,6 +124,13 @@ private fun PharmaMobilApp(
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
+                Text(
+                    text = "Sesión: ${usuario.nombreCompleto.ifBlank { usuario.usuario }}",
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                )
+                TextButton(onClick = onCerrarSesion, modifier = Modifier.padding(horizontal = 12.dp)) {
+                    Text("Cerrar sesión")
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -142,6 +176,24 @@ private fun PharmaMobilApp(
             ) {
                 when (pantallaActual) {
                     Screen.Inicio -> InicioScreen()
+                    Screen.ProductosServidor -> {
+                        val viewModel = koinViewModel<ProductosServidorViewModel>()
+                        val state by viewModel.uiState.collectAsStateWithLifecycle()
+                        ProductosServidorScreen(
+                            state, usuario.puede(Permisos.CATALOGO_ESCRIBIR),
+                            viewModel::formulario, viewModel::guardar, viewModel::editar,
+                            viewModel::limpiar, viewModel::eliminar, viewModel::cargar
+                        )
+                    }
+                    Screen.ClientesServidor -> {
+                        val viewModel = koinViewModel<ClientesServidorViewModel>()
+                        val state by viewModel.uiState.collectAsStateWithLifecycle()
+                        ClientesServidorScreen(
+                            state, usuario.puede(Permisos.CLIENTES_ESCRIBIR),
+                            viewModel::formulario, viewModel::guardar, viewModel::editar,
+                            viewModel::limpiar, viewModel::eliminar, viewModel::cargar
+                        )
+                    }
                     Screen.Productos -> {
                         val viewModel = koinViewModel<pe.edu.upeu.pharmamobile.presentation.producto.ProductoViewModel>()
                         val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -152,7 +204,8 @@ private fun PharmaMobilApp(
                             onStockChange = viewModel::cambiarStock,
                             onRegistrar = viewModel::guardar,
                             onReintentar = viewModel::cargarProductos,
-                            onDetalle = { pantallaActual = Screen.DetalleProducto(it) }
+                            onDetalle = { pantallaActual = Screen.DetalleProducto(it) },
+                            puedeRegistrar = usuario.puede(Permisos.CATALOGO_ESCRIBIR)
                         )
                     }
                     Screen.Catalogo -> {
@@ -169,7 +222,8 @@ private fun PharmaMobilApp(
                             onCorreoChange = viewModel::cambiarCorreo,
                             onTelefonoChange = viewModel::cambiarTelefono,
                             onRegistrar = viewModel::guardar,
-                            onReintentar = viewModel::cargarClientes
+                            onReintentar = viewModel::cargarClientes,
+                            puedeRegistrar = usuario.puede(Permisos.CLIENTES_ESCRIBIR)
                         )
                     }
                     Screen.Pedidos -> PedidoScreen()

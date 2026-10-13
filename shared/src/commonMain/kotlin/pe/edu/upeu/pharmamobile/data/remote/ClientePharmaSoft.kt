@@ -38,6 +38,7 @@ fun crearClientePharmaSoft(
 ): HttpClient {
     val configurar: HttpClientConfig<*>.() -> Unit = {
         expectSuccess = true
+        followRedirects = false
         install(HttpTimeout) { requestTimeoutMillis = 10_000 }
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
         install(DefaultRequest) {

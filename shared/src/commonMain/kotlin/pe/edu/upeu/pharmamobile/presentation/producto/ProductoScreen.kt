@@ -31,7 +31,8 @@ fun ProductoScreen(
     onStockChange: (String) -> Unit,
     onRegistrar: () -> Unit,
     onReintentar: () -> Unit,
-    onDetalle: (Long) -> Unit
+    onDetalle: (Long) -> Unit,
+    puedeRegistrar: Boolean = true
 ) {
     val formulario = state.formulario
     Column(
@@ -39,16 +40,18 @@ fun ProductoScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("PHARMAMOBIL", style = MaterialTheme.typography.headlineMedium)
-        Text("Registro de Producto", style = MaterialTheme.typography.titleLarge)
-        ValidatedTextField(formulario.nombre, onNombreChange, "Nombre del producto", formulario.errorNombre)
-        ValidatedTextField(formulario.precio, onPrecioChange, "Precio", formulario.errorPrecio, KeyboardType.Decimal)
-        ValidatedTextField(formulario.stock, onStockChange, "Stock", formulario.errorStock, KeyboardType.Number)
-        Button(onClick = onRegistrar, enabled = !state.guardando, modifier = Modifier.fillMaxWidth()) {
-            Text(if (state.guardando) "REGISTRANDO..." else "REGISTRAR")
+        if (puedeRegistrar) {
+            Text("Registro de Producto", style = MaterialTheme.typography.titleLarge)
+            ValidatedTextField(formulario.nombre, onNombreChange, "Nombre del producto", formulario.errorNombre)
+            ValidatedTextField(formulario.precio, onPrecioChange, "Precio", formulario.errorPrecio, KeyboardType.Decimal)
+            ValidatedTextField(formulario.stock, onStockChange, "Stock", formulario.errorStock, KeyboardType.Number)
+            Button(onClick = onRegistrar, enabled = !state.guardando, modifier = Modifier.fillMaxWidth()) {
+                Text(if (state.guardando) "REGISTRANDO..." else "REGISTRAR")
+            }
         }
         state.mensaje?.let { MensajeExito(it) }
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-        Text("Inventario", style = MaterialTheme.typography.titleLarge)
+        Text("Inventario local de demostración", style = MaterialTheme.typography.titleLarge)
         when (val fase = state.fase) {
             ProductoFase.Cargando -> Row(
                 modifier = Modifier.fillMaxWidth(),
