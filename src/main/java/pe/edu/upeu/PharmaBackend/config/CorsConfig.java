@@ -1,13 +1,17 @@
 package pe.edu.upeu.PharmaBackend.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 
 @Configuration
-public class CorsConfig implements WebMvcConfigurer {
+public class CorsConfig {
 
     private final String[] origenesPermitidos;
 
@@ -22,26 +26,18 @@ public class CorsConfig implements WebMvcConfigurer {
         this.origenesPermitidos = origenesPermitidos;
     }
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList(origenesPermitidos));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(Arrays.asList("Content-Type", "Accept", "Authorization", "Origin"));
+        config.setExposedHeaders(Arrays.asList("Location"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
 
-        registry.addMapping("/api/**")
-                .allowedOrigins(origenesPermitidos)
-                .allowedMethods(
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "DELETE",
-                        "OPTIONS"
-                )
-                .allowedHeaders(
-                        "Content-Type",
-                        "Accept",
-                        "Authorization",
-                        "Origin"
-                )
-                .exposedHeaders("Location")
-                .allowCredentials(true)
-                .maxAge(3600);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
     }
 }
