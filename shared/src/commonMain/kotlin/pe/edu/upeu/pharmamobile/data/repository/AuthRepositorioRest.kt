@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.auth.authProvider
+import io.ktor.client.plugins.auth.AuthCircuitBreaker
 import io.ktor.client.plugins.auth.providers.BearerAuthProvider
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -27,6 +28,8 @@ class AuthRepositorioRest(
     override suspend fun iniciarSesion(credenciales: Credenciales): Sesion {
         try {
             val dto: LoginResponseDto = cliente.post("auth/login") {
+                // El 401 de credenciales inválidas nunca debe reintentarse con un token anterior.
+                attributes.put(AuthCircuitBreaker, Unit)
                 setBody(LoginRequestDto(credenciales.usuario, credenciales.clave))
             }.body()
             if (dto.token.isBlank()) throw SesionException(ErrorSesion.SinConexion)

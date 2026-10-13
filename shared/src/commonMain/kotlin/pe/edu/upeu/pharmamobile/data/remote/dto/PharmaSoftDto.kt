@@ -14,7 +14,8 @@ data class ProductoServidorDto(
     val nombre: String,
     val precio: Double,
     val stock: Int,
-    val categoriaId: Long
+    val categoriaId: Long,
+    val estado: Boolean = true
 )
 
 @Serializable
@@ -34,7 +35,8 @@ data class ClienteServidorDto(
     val apellidos: String,
     val email: String,
     val telefono: String? = null,
-    val direccion: String? = null
+    val direccion: String? = null,
+    val estado: Boolean = true
 )
 
 @Serializable

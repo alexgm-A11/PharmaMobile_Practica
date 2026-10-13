@@ -5,6 +5,7 @@ import io.ktor.client.engine.mock.MockEngineConfig
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
@@ -23,6 +24,8 @@ import pe.edu.upeu.pharmamobile.domain.model.Credenciales
 import pe.edu.upeu.pharmamobile.domain.model.ErrorSesion
 import pe.edu.upeu.pharmamobile.domain.model.Permisos
 import pe.edu.upeu.pharmamobile.domain.model.SesionException
+import pe.edu.upeu.pharmamobile.domain.model.ProductoEntrada
+import pe.edu.upeu.pharmamobile.domain.model.ClienteEntrada
 
 class AuthPharmaSoftTest {
     private class Memoria : AlmacenSeguro {
@@ -66,10 +69,27 @@ class AuthPharmaSoftTest {
     }
 
     @Test
+    fun sesion_se_recupera_con_un_cliente_nuevo_desde_el_almacen() = runTest {
+        val almacen = Memoria().apply { token = "jwt-persistido" }
+        val motor = MockEngine { request ->
+            assertEquals("/api/v1/auth/me", request.url.encodedPath)
+            assertEquals("Bearer jwt-persistido", request.headers[HttpHeaders.Authorization])
+            respond(jsonMe, HttpStatusCode.OK, cabeceras)
+        }
+        val clienteNuevo = crearClientePharmaSoft(almacen, EventosSesion(), false,
+            "http://localhost:8080/api/v1/", motor)
+        try {
+            assertEquals("admin", AuthRepositorioRest(clienteNuevo, almacen).sesionGuardada()?.usuario)
+        } finally { clienteNuevo.close() }
+    }
+
+    @Test
     fun un_401_protegido_borra_token_y_notifica_expiracion() = runTest {
         val almacen = Memoria().apply { token = "caducado" }
         val eventos = EventosSesion()
+        var peticiones = 0
         val motor = MockEngine { request ->
+            peticiones++
             assertEquals("Bearer caducado", request.headers[HttpHeaders.Authorization])
             respond("{}", HttpStatusCode.Unauthorized, cabeceras)
         }
@@ -80,6 +100,7 @@ class AuthPharmaSoftTest {
             assertEquals(ErrorSesion.SesionExpirada, error.motivo)
             assertNull(almacen.token)
             assertEquals(1, eventos.expiraciones.value)
+            assertEquals(1, peticiones)
         } finally { cliente.close() }
     }
 
@@ -110,6 +131,24 @@ class AuthPharmaSoftTest {
             }
             assertEquals(ErrorSesion.CredencialesInvalidas, error.motivo)
             assertNull(almacen.token)
+        } finally { cliente.close() }
+    }
+
+    @Test
+    fun login_invalido_con_token_viejo_no_lo_envia_ni_reintenta() = runTest {
+        val almacen = Memoria().apply { token = "token-viejo" }
+        val autorizaciones = mutableListOf<String?>()
+        val motor = MockEngine { request ->
+            autorizaciones += request.headers[HttpHeaders.Authorization]
+            respond("{}", HttpStatusCode.Unauthorized, cabeceras)
+        }
+        val cliente = crearClientePharmaSoft(almacen, EventosSesion(), false,
+            "http://localhost:8080/api/v1/", motor)
+        try {
+            assertFailsWith<SesionException> {
+                AuthRepositorioRest(cliente, almacen).iniciarSesion(Credenciales("admin", "mal"))
+            }
+            assertEquals(listOf<String?>(null), autorizaciones)
         } finally { cliente.close() }
     }
 
@@ -154,6 +193,44 @@ class AuthPharmaSoftTest {
             assertEquals("Paracetamol", repo.listarProductos().single().nombre)
             assertEquals("Ana", repo.listarClientes().single().nombres)
             assertEquals(listOf("/api/v1/productos", "/api/v1/clientes"), rutas)
+        } finally { cliente.close() }
+    }
+
+    @Test
+    fun crear_editar_y_eliminar_en_servidor_usa_bearer_y_rutas_correctas() = runTest {
+        val almacen = Memoria().apply { token = "jwt-valido" }
+        val operaciones = mutableListOf<String>()
+        val motor = MockEngine { request ->
+            assertEquals("Bearer jwt-valido", request.headers[HttpHeaders.Authorization])
+            operaciones += "${request.method.value} ${request.url.encodedPath}"
+            when (request.method) {
+                HttpMethod.Delete -> respond("", HttpStatusCode.NoContent)
+                else -> if (request.url.encodedPath.startsWith("/api/v1/productos")) {
+                    respond("""{"id":1,"nombre":"Paracetamol","precio":8.5,"stock":4,"categoriaId":1}""",
+                        HttpStatusCode.OK, cabeceras)
+                } else {
+                    respond("""{"id":2,"dni":"12345678","nombres":"Ana","apellidos":"Paz","email":"ana@correo.pe"}""",
+                        HttpStatusCode.OK, cabeceras)
+                }
+            }
+        }
+        val cliente = crearClientePharmaSoft(almacen, EventosSesion(), false,
+            "http://localhost:8080/api/v1/", motor)
+        try {
+            val repo = PharmaSoftRepositorioRest(cliente)
+            val producto = ProductoEntrada("Paracetamol", 8.5, 4, 1)
+            val persona = ClienteEntrada("12345678", "Ana", "Paz", "ana@correo.pe", null, null)
+            repo.guardarProducto(producto)
+            repo.guardarProducto(producto, 1)
+            repo.eliminarProducto(1)
+            repo.guardarCliente(persona)
+            repo.guardarCliente(persona, 2)
+            repo.eliminarCliente(2)
+            assertEquals(
+                listOf("POST /api/v1/productos", "PUT /api/v1/productos/1", "DELETE /api/v1/productos/1",
+                    "POST /api/v1/clientes", "PUT /api/v1/clientes/2", "DELETE /api/v1/clientes/2"),
+                operaciones
+            )
         } finally { cliente.close() }
     }
 }

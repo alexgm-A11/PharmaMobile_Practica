@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +69,10 @@ fun ProductosServidorScreen(
             OutlinedTextField(state.formulario.categoriaId, { onFormulario { f -> f.copy(categoriaId = it) } },
                 label = { Text("ID de categoría") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth())
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Activo")
+                Switch(state.formulario.estado, { onFormulario { f -> f.copy(estado = it) } })
+            }
             state.categorias.forEach { categoria ->
                 TextButton(onClick = { onFormulario { it.copy(categoriaId = categoria.id.toString()) } }) {
                     Text("${categoria.id}: ${categoria.nombre}")
@@ -87,6 +92,7 @@ fun ProductosServidorScreen(
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(producto.nombre, style = MaterialTheme.typography.titleSmall)
                 Text("${item.precioFormateado} · Stock: ${producto.stock} · Categoría: ${producto.categoriaId}")
+                if (!producto.estado) Text("Inactivo")
                 if (puedeEscribir) Row {
                     TextButton(onClick = { onEditar(producto) }) { Text("EDITAR") }
                     TextButton(onClick = { eliminarId = producto.id }) { Text("ELIMINAR") }
@@ -144,6 +150,10 @@ fun ClientesServidorScreen(
             OutlinedTextField(state.formulario.direccion, { onFormulario { f -> f.copy(direccion = it) } },
                 label = { Text("Dirección (opcional)") }, modifier = Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Activo")
+                Switch(state.formulario.estado, { onFormulario { f -> f.copy(estado = it) } })
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onGuardar, enabled = !state.cargando) {
                     Text(if (state.formulario.id == null) "REGISTRAR" else "GUARDAR CAMBIOS")
                 }
@@ -156,6 +166,7 @@ fun ClientesServidorScreen(
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("${cliente.nombres} ${cliente.apellidos}", style = MaterialTheme.typography.titleSmall)
                 Text("DNI: ${cliente.dni} · ${cliente.email}")
+                if (!cliente.estado) Text("Inactivo")
                 if (puedeEscribir) Row {
                     TextButton(onClick = { onEditar(cliente) }) { Text("EDITAR") }
                     TextButton(onClick = { eliminarId = cliente.id }) { Text("ELIMINAR") }

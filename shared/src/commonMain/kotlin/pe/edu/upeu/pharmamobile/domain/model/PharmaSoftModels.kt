@@ -7,14 +7,16 @@ data class ProductoServidor(
     val nombre: String,
     val precio: Double,
     val stock: Int,
-    val categoriaId: Long
+    val categoriaId: Long,
+    val estado: Boolean = true
 )
 
 data class ProductoEntrada(
     val nombre: String,
     val precio: Double,
     val stock: Int,
-    val categoriaId: Long
+    val categoriaId: Long,
+    val estado: Boolean = true
 )
 
 data class ClienteServidor(
@@ -24,7 +26,8 @@ data class ClienteServidor(
     val apellidos: String,
     val email: String,
     val telefono: String?,
-    val direccion: String?
+    val direccion: String?,
+    val estado: Boolean = true
 )
 
 data class ClienteEntrada(
@@ -33,5 +36,6 @@ data class ClienteEntrada(
     val apellidos: String,
     val email: String,
     val telefono: String?,
-    val direccion: String?
+    val direccion: String?,
+    val estado: Boolean = true
 )

@@ -22,7 +22,8 @@ data class FormularioProductoServidor(
     val nombre: String = "",
     val precio: String = "",
     val stock: String = "",
-    val categoriaId: String = ""
+    val categoriaId: String = "",
+    val estado: Boolean = true
 )
 
 data class ProductosServidorUiState(
@@ -46,7 +47,8 @@ class ProductosServidorViewModel(private val gestion: GestionPharmaSoftUseCase) 
     fun editar(producto: ProductoServidor) {
         _uiState.update {
             it.copy(formulario = FormularioProductoServidor(producto.id, producto.nombre,
-                producto.precio.toString(), producto.stock.toString(), producto.categoriaId.toString()))
+                producto.precio.toString(), producto.stock.toString(), producto.categoriaId.toString(),
+                producto.estado))
         }
     }
 
@@ -74,7 +76,7 @@ class ProductosServidorViewModel(private val gestion: GestionPharmaSoftUseCase) 
         val f = _uiState.value.formulario
         _uiState.update { it.copy(cargando = true, mensaje = null) }
         try {
-            gestion.guardarProducto(f.nombre, f.precio, f.stock, f.categoriaId, f.id)
+            gestion.guardarProducto(f.nombre, f.precio, f.stock, f.categoriaId, f.id, f.estado)
             _uiState.update { it.copy(cargando = false, formulario = FormularioProductoServidor(),
                 mensaje = "Producto guardado en PharmaSoft.") }
             cargar()
@@ -106,7 +108,8 @@ data class FormularioClienteServidor(
     val apellidos: String = "",
     val email: String = "",
     val telefono: String = "",
-    val direccion: String = ""
+    val direccion: String = "",
+    val estado: Boolean = true
 )
 
 data class ClientesServidorUiState(
@@ -129,7 +132,8 @@ class ClientesServidorViewModel(private val gestion: GestionPharmaSoftUseCase) :
     fun editar(cliente: ClienteServidor) {
         _uiState.update {
             it.copy(formulario = FormularioClienteServidor(cliente.id, cliente.dni, cliente.nombres,
-                cliente.apellidos, cliente.email, cliente.telefono.orEmpty(), cliente.direccion.orEmpty()))
+                cliente.apellidos, cliente.email, cliente.telefono.orEmpty(), cliente.direccion.orEmpty(),
+                cliente.estado))
         }
     }
 
@@ -151,7 +155,8 @@ class ClientesServidorViewModel(private val gestion: GestionPharmaSoftUseCase) :
         val f = _uiState.value.formulario
         _uiState.update { it.copy(cargando = true, mensaje = null) }
         try {
-            gestion.guardarCliente(f.dni, f.nombres, f.apellidos, f.email, f.telefono, f.direccion, f.id)
+            gestion.guardarCliente(f.dni, f.nombres, f.apellidos, f.email, f.telefono, f.direccion, f.id,
+                f.estado)
             _uiState.update { it.copy(cargando = false, formulario = FormularioClienteServidor(),
                 mensaje = "Cliente guardado en PharmaSoft.") }
             cargar()

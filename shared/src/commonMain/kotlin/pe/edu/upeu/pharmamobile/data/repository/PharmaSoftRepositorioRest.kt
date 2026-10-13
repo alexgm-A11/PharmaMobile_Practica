@@ -31,7 +31,8 @@ class PharmaSoftRepositorioRest(private val cliente: HttpClient) : PharmaSoftRep
             .contenido.map(ProductoServidorDto::dominio)
 
     override suspend fun guardarProducto(entrada: ProductoEntrada, id: Long?): ProductoServidor {
-        val cuerpo = ProductoGuardarDto(entrada.nombre, entrada.precio, entrada.stock, categoriaId = entrada.categoriaId)
+        val cuerpo = ProductoGuardarDto(entrada.nombre, entrada.precio, entrada.stock,
+            estado = entrada.estado, categoriaId = entrada.categoriaId)
         val respuesta = if (id == null) cliente.post("productos") { setBody(cuerpo) }
             else cliente.put("productos/$id") { setBody(cuerpo) }
         return respuesta.body<ProductoServidorDto>().dominio()
@@ -46,7 +47,7 @@ class PharmaSoftRepositorioRest(private val cliente: HttpClient) : PharmaSoftRep
     override suspend fun guardarCliente(entrada: ClienteEntrada, id: Long?): ClienteServidor {
         val cuerpo = ClienteGuardarDto(
             entrada.dni, entrada.nombres, entrada.apellidos, entrada.email,
-            entrada.telefono, entrada.direccion
+            entrada.telefono, entrada.direccion, entrada.estado
         )
         val respuesta = if (id == null) cliente.post("clientes") { setBody(cuerpo) }
             else cliente.put("clientes/$id") { setBody(cuerpo) }
@@ -56,5 +57,5 @@ class PharmaSoftRepositorioRest(private val cliente: HttpClient) : PharmaSoftRep
     override suspend fun eliminarCliente(id: Long) { cliente.delete("clientes/$id") }
 }
 
-private fun ProductoServidorDto.dominio() = ProductoServidor(id, nombre, precio, stock, categoriaId)
-private fun ClienteServidorDto.dominio() = ClienteServidor(id, dni, nombres, apellidos, email, telefono, direccion)
+private fun ProductoServidorDto.dominio() = ProductoServidor(id, nombre, precio, stock, categoriaId, estado)
+private fun ClienteServidorDto.dominio() = ClienteServidor(id, dni, nombres, apellidos, email, telefono, direccion, estado)
