@@ -37,7 +37,7 @@ La colección Postman proporcionada contiene 63 solicitudes: login correcto e in
 
 El RAR contiene solo dos migraciones del servidor: `V2__seguridad_empleados_usuarios.sql` define empleados, roles, usuarios y la relación usuario-rol; `V3__datos_iniciales_seguridad.sql` carga empleados y usuarios de prueba con contraseñas BCrypt. **No es una base de datos móvil ni contiene el código Java de JWT.** La segunda línea de V2 del RAR es `BD SEGURIDAD` sin prefijo de comentario SQL; tal como está, provocaría un error de sintaxis. El repositorio original actualizado de PharmaSoft ya incluye una V2 corregida, V3 y toda la implementación de seguridad; se usó esa versión sin modificar el RAR.
 
-La carpeta local `C:\Users\alexg\AndroidStudioProjects\pharmaSoft` se actualizó por avance rápido a la revisión de seguridad del repositorio original. Contiene `AuthController`, filtro JWT, reglas de Spring Security y V1/V2/V3; además se prepararon `compose.yaml`, un perfil `container` y V4 con categorías iniciales. Se corrigió su configuración de CORS para proveer explícitamente el bean que requiere `SecurityConfig`. La respuesta real de `/auth/me` usa `empleadoNombre`, no `nombreCompleto`, y el DTO móvil ahora la mapea. La prueba integrada sigue pendiente porque Docker Desktop informa motor Linux detenido (`hasNoVirtualization: true`) y no pudo iniciar Oracle.
+La carpeta local `C:\Users\alexg\AndroidStudioProjects\pharmaSoft` se actualizó por avance rápido a la revisión de seguridad del repositorio original. Contiene `AuthController`, filtro JWT, reglas de Spring Security y V1/V2/V3; además se prepararon `compose.yaml`, un perfil `container` y V4 con categorías iniciales. Se corrigió su configuración de CORS para proveer explícitamente el bean que requiere `SecurityConfig`. La respuesta real de `/auth/me` usa `empleadoNombre`, no `nombreCompleto`, y el DTO móvil ahora la mapea. Tras reiniciar Windows, Docker Desktop arrancó; Oracle y el backend funcionan en contenedores y Flyway aplicó V1-V4.
 
 ## Verificación ejecutada
 
@@ -45,12 +45,11 @@ Comando: `./gradlew.bat :shared:testAndroidHostTest :androidApp:assembleDebug :s
 
 Las pruebas con MockEngine verifican: login sin token y sin reintento ante 401 aunque exista uno viejo, Bearer en la primera petición posterior, recuperación de sesión, logout, 401 protegido que borra token, 403 que lo conserva, credenciales inválidas, saneamiento del log y GET/POST/PUT/DELETE autenticados de productos/clientes. Las pruebas de navegación comprueban que `almacen` no ve clientes ni ventas. El conjunto de pruebas de host Android terminó correctamente. El APK `debug` y el Kotlin compartido para iOS compilaron.
 
-En total pasaron 28 pruebas, incluyendo el contrato corregido de `/auth/me`. El APK se instaló y abrió en un emulador Pixel 6 sin excepción de arranque. Esto no valida el inicio de sesión ni las operaciones REST reales: el motor de contenedores no estuvo disponible.
+En total pasaron 28 pruebas, incluyendo el contrato corregido de `/auth/me`. El APK se instaló y abrió en un emulador Pixel 6 sin excepción de arranque. Además, se probó el backend real con Oracle: salud 200, productos sin token 401, login admin correcto, `/auth/me` devuelve `admin`, productos con token 200, tres categorías y clientes con rol `almacen` 403. Se creó, consultó y eliminó un producto temporal (201/200/204), y `mvnw.cmd test` pasó completo contra Oracle. Estas comprobaciones HTTP no sustituyen una prueba manual completa desde la app.
 
 ## Pendiente para la evidencia de la guía
 
-- Habilitar/reparar Docker Desktop y WSL 2, luego ejecutar `docker compose up --build -d` en `pharmaSoft`. Flyway debe aplicar V1-V4 y levantar `/api/v1/auth/login` y `/api/v1/auth/me`.
-- Ejecutar la colección Postman y conservar capturas de 401 sin token, 200 con admin y 403 de `almacen` al consultar clientes.
+- Ejecutar la colección Postman completa y conservar capturas de las respuestas 401 sin token, 200 con admin y 403 de `almacen` al consultar clientes (estas tres respuestas ya se verificaron por HTTP directo).
 - Ejecutar la app en emulador Android y simulador iOS con ese backend, verificar persistencia tras reinicio y capturar login, CRUD, 403 y log con `Authorization: ***`.
 - El RAR no se debe copiar a `shared/src`: pertenece a Flyway del servidor. La ejecución iOS requiere macOS/Xcode; compilar el source set desde Windows no demuestra el Keychain en funcionamiento.
 
