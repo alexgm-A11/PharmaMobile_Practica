@@ -22,12 +22,14 @@ El log registra solo cabeceras en modo de depuración y sustituye `Authorization
 
 ## Flujo de sesión
 
-1. Inicio: si no hay token, se presenta LoginScreen. Si existe, `/auth/me` lo valida y recupera permisos; un fallo de red no borra el token y permite reintentar.
+1. Inicio: si no hay token, se presenta LoginScreen. Si existe, `/auth/me` lo valida y recupera permisos. Si falla por red, se restaura el perfil mínimo cifrado y se limita la interfaz a Inicio/Productos para permitir uso local sin afirmar que el JWT esté validado.
 2. Login: `POST /auth/login` recibe el DTO del servidor, guarda el token en `AlmacenSeguro` y muestra la aplicación. La contraseña no queda en el estado después del resultado.
 3. Petición protegida: Ktor añade Bearer automáticamente. Las pantallas PharmaSoft no construyen la cabecera.
 4. 401 protegido: se elimina el token, se notifica al ViewModel y se vuelve al login con aviso de expiración. El 401 del propio login se interpreta como credenciales inválidas.
 5. 403: se conserva token y sesión; la pantalla muestra falta de permisos. El servidor es la autoridad final.
 6. Cierre: se elimina el token protegido, se limpia la caché del proveedor Bearer y se muestra el login.
+
+La sesión 11 guarda usuario, nombre y permisos mínimos junto al token cifrados en Android/iOS. En modo offline no se presentan pantallas REST ni se envían datos sin que PharmaSoft vuelva a validar el token. Un 401 real elimina tanto el JWT como el perfil local y exige autenticarse otra vez. Los permisos cacheados pueden estar desactualizados hasta la reconexión; la autorización del backend sigue siendo definitiva.
 
 Los permisos se usan para ocultar secciones y botones. `CATALOGO_LEER` permite ver productos; `CATALOGO_ESCRIBIR` permite crearlos, editarlos y eliminarlos; `CLIENTES_LEER` permite ver clientes; `CLIENTES_ESCRIBIR` habilita su escritura. `almacen` no ve la sección de clientes. Esto no sustituye la autorización del servidor.
 
