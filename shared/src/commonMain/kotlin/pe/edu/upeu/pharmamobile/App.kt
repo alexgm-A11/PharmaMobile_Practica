@@ -38,6 +38,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import pe.edu.upeu.pharmamobile.navigation.Screen
 import pe.edu.upeu.pharmamobile.navigation.tituloPantalla
 import pe.edu.upeu.pharmamobile.navigation.destinosPermitidos
+import pe.edu.upeu.pharmamobile.navigation.destinosOffline
 import pe.edu.upeu.pharmamobile.presentation.cliente.ClienteScreen
 import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoScreen
 import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoViewModel
@@ -111,7 +112,8 @@ private fun PharmaMobilApp(
                 )
                 HorizontalDivider()
 
-                destinosPermitidos(usuario.permisos).forEach { destino ->
+                (if (usuario.modoOffline) destinosOffline(usuario.permisos) else destinosPermitidos(usuario.permisos))
+                    .forEach { destino ->
                     NavigationDrawerItem(
                         label = { Text(destino.titulo) },
                         selected = pantallaActual == destino,
@@ -128,6 +130,13 @@ private fun PharmaMobilApp(
                     text = "Sesión: ${usuario.nombreCompleto.ifBlank { usuario.usuario }}",
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
+                if (usuario.modoOffline) {
+                    Text(
+                        text = "Modo sin conexión: solo datos locales",
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                    )
+                }
                 TextButton(onClick = onCerrarSesion, modifier = Modifier.padding(horizontal = 12.dp)) {
                     Text("Cerrar sesión")
                 }

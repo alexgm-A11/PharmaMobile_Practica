@@ -15,13 +15,14 @@ data class ProductoUi(
     val nombre: String,
     val precio: String,
     val stock: Int,
-    val requiereReposicion: Boolean
+    val requiereReposicion: Boolean,
+    val pendiente: Boolean = false
 ) {
     companion object {
         fun from(producto: Producto): ProductoUi {
             return ProductoUi(
                 producto.id, producto.nombre, formatearSoles(producto.precio),
-                producto.stock, producto.requiereReposicion
+                producto.stock, producto.requiereReposicion, producto.pendiente
             )
         }
     }
@@ -40,5 +41,8 @@ data class ProductoUiState(
     val fase: ProductoFase = ProductoFase.Cargando,
     val formulario: ProductoFormularioState = ProductoFormularioState(),
     val guardando: Boolean = false,
-    val mensaje: String? = null
+    val mensaje: String? = null,
+    val sincronizando: Boolean = false,
+    val avisoRed: String? = null,
+    val ultimaSincronizacion: String = "Nunca sincronizado"
 )

@@ -36,22 +36,39 @@ import platform.Security.kSecMatchLimit
 import platform.Security.kSecMatchLimitOne
 import platform.Security.kSecReturnData
 import platform.Security.kSecValueData
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
 
 /** Keychain genérico, restringido a este dispositivo y servicio. */
 @OptIn(ExperimentalForeignApi::class)
 class AlmacenSeguroIos : AlmacenSeguro {
-    override fun guardarToken(token: String) {
-        require(token.isNotBlank())
-        borrarToken()
-        conConsulta { consulta ->
-            val bytes = token.encodeToByteArray()
+    override fun guardarToken(token: String) = guardarCadena(token, CUENTA_JWT)
+
+    override fun leerToken(): String? = leerCadena(CUENTA_JWT)
+
+    override fun borrarToken() = borrarCadena(CUENTA_JWT)
+
+    override fun guardarPerfilSesion(perfil: PerfilSesionOffline) =
+        guardarCadena(Json.encodeToString(perfil), CUENTA_PERFIL)
+
+    override fun leerPerfilSesion(): PerfilSesionOffline? =
+        leerCadena(CUENTA_PERFIL)?.let { runCatching { Json.decodeFromString<PerfilSesionOffline>(it) }.getOrNull() }
+
+    override fun borrarPerfilSesion() = borrarCadena(CUENTA_PERFIL)
+
+    private fun guardarCadena(valor: String, cuenta: String) {
+        require(valor.isNotBlank())
+        borrarCadena(cuenta)
+        conConsulta(cuenta) { consulta ->
+            val bytes = valor.encodeToByteArray()
             bytes.usePinned { fijados ->
                 val datos = CFDataCreate(null, fijados.addressOf(0).reinterpret(), bytes.size.toLong())
                     ?: error("No se pudo codificar el token")
                 try {
                     CFDictionaryAddValue(consulta, kSecValueData, datos)
                     CFDictionaryAddValue(consulta, kSecAttrAccessible, kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
-                    check(SecItemAdd(consulta, null) == errSecSuccess) { "Keychain no guardó el token" }
+                    check(SecItemAdd(consulta, null) == errSecSuccess) { "Keychain no guardó el dato de sesión" }
                 } finally {
                     CFRelease(datos)
                 }
@@ -59,7 +76,7 @@ class AlmacenSeguroIos : AlmacenSeguro {
         }
     }
 
-    override fun leerToken(): String? = conConsulta { consulta ->
+    private fun leerCadena(cuenta: String): String? = conConsulta(cuenta) { consulta ->
         CFDictionaryAddValue(consulta, kSecReturnData, kCFBooleanTrue)
         CFDictionaryAddValue(consulta, kSecMatchLimit, kSecMatchLimitOne)
         memScoped {
@@ -81,8 +98,8 @@ class AlmacenSeguroIos : AlmacenSeguro {
         }
     }
 
-    override fun borrarToken() {
-        conConsulta { consulta ->
+    private fun borrarCadena(cuenta: String) {
+        conConsulta(cuenta) { consulta ->
             val estado = SecItemDelete(consulta)
             check(estado == errSecSuccess || estado == errSecItemNotFound) {
                 "No se pudo borrar el token de Keychain"
@@ -90,19 +107,24 @@ class AlmacenSeguroIos : AlmacenSeguro {
         }
     }
 
-    private inline fun <T> conConsulta(operacion: (CFMutableDictionaryRef?) -> T): T {
+    private inline fun <T> conConsulta(cuenta: String, operacion: (CFMutableDictionaryRef?) -> T): T {
         val servicio = CFStringCreateWithCString(null, "pe.edu.upeu.pharmamobile.sesion", kCFStringEncodingUTF8)
-        val cuenta = CFStringCreateWithCString(null, "jwt", kCFStringEncodingUTF8)
+        val cuentaNativa = CFStringCreateWithCString(null, cuenta, kCFStringEncodingUTF8)
         val consulta = CFDictionaryCreateMutable(null, 0, null, null)
         try {
             CFDictionaryAddValue(consulta, kSecClass, kSecClassGenericPassword)
             CFDictionaryAddValue(consulta, kSecAttrService, servicio)
-            CFDictionaryAddValue(consulta, kSecAttrAccount, cuenta)
+            CFDictionaryAddValue(consulta, kSecAttrAccount, cuentaNativa)
             return operacion(consulta)
         } finally {
             CFRelease(consulta)
             CFRelease(servicio)
-            CFRelease(cuenta)
+            CFRelease(cuentaNativa)
         }
+    }
+
+    private companion object {
+        const val CUENTA_JWT = "jwt"
+        const val CUENTA_PERFIL = "perfil"
     }
 }

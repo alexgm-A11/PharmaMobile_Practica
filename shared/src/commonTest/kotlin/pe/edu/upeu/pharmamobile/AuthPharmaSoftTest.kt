@@ -16,6 +16,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import pe.edu.upeu.pharmamobile.data.local.AlmacenSeguro
+import pe.edu.upeu.pharmamobile.data.local.PerfilSesionOffline
 import pe.edu.upeu.pharmamobile.data.local.EventosSesion
 import pe.edu.upeu.pharmamobile.data.remote.crearClientePharmaSoft
 import pe.edu.upeu.pharmamobile.data.repository.AuthRepositorioRest
@@ -30,9 +31,13 @@ import pe.edu.upeu.pharmamobile.domain.model.ClienteEntrada
 class AuthPharmaSoftTest {
     private class Memoria : AlmacenSeguro {
         var token: String? = null
+        var perfil: PerfilSesionOffline? = null
         override fun guardarToken(token: String) { this.token = token }
         override fun leerToken() = token
         override fun borrarToken() { token = null }
+        override fun guardarPerfilSesion(perfil: PerfilSesionOffline) { this.perfil = perfil }
+        override fun leerPerfilSesion() = perfil
+        override fun borrarPerfilSesion() { perfil = null }
     }
 
     private val jsonLogin = """{"token":"jwt-secreto","tipo":"Bearer","expiraEnSegundos":3600,"username":"admin","nombreCompleto":"Carlos Ramírez","roles":["ADMIN"],"permisos":["CATALOGO_LEER","CATALOGO_ESCRIBIR","CLIENTES_LEER"]}"""
@@ -67,6 +72,7 @@ class AuthPharmaSoftTest {
             assertEquals(listOf(null, "Bearer jwt-secreto"), autorizaciones)
             repo.cerrarSesion()
             assertNull(almacen.token)
+            assertNull(almacen.perfil)
         } finally { cliente.close() }
     }
 
@@ -83,6 +89,39 @@ class AuthPharmaSoftTest {
         try {
             assertEquals("admin", AuthRepositorioRest(clienteNuevo, almacen).sesionGuardada()?.usuario)
         } finally { clienteNuevo.close() }
+    }
+
+    @Test
+    fun sesion_guardada_sin_red_habilita_solo_el_perfil_local_cacheado() = runTest {
+        val almacen = Memoria().apply {
+            token = "jwt-cacheado"
+            perfil = PerfilSesionOffline("admin", "Carlos Ramírez", setOf(Permisos.CATALOGO_LEER, Permisos.CATALOGO_ESCRIBIR))
+        }
+        val motor = MockEngine { throw IllegalStateException("Sin conexión simulada") }
+        val cliente = crearClientePharmaSoft(almacen, EventosSesion(), false,
+            "http://localhost:8080/api/v1/", motor)
+        try {
+            val sesion = AuthRepositorioRest(cliente, almacen).sesionGuardada()
+            assertEquals("admin", sesion?.usuario)
+            assertTrue(sesion?.modoOffline == true)
+            assertTrue(sesion?.puede(Permisos.CATALOGO_ESCRIBIR) == true)
+            assertEquals("jwt-cacheado", almacen.token)
+        } finally { cliente.close() }
+    }
+
+    @Test
+    fun logout_borra_token_y_perfil_offline() = runTest {
+        val almacen = Memoria().apply {
+            token = "jwt"
+            perfil = PerfilSesionOffline("admin", "Carlos", setOf(Permisos.CATALOGO_LEER))
+        }
+        val cliente = crearClientePharmaSoft(almacen, EventosSesion(), false,
+            "http://localhost:8080/api/v1/", MockEngine { respond("{}", HttpStatusCode.OK, cabeceras) })
+        try {
+            AuthRepositorioRest(cliente, almacen).cerrarSesion()
+            assertNull(almacen.token)
+            assertNull(almacen.perfil)
+        } finally { cliente.close() }
     }
 
     @Test

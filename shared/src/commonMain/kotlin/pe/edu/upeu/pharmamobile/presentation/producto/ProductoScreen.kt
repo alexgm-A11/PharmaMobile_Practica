@@ -51,7 +51,12 @@ fun ProductoScreen(
         }
         state.mensaje?.let { MensajeExito(it) }
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-        Text("Inventario local de demostración", style = MaterialTheme.typography.titleLarge)
+        Text("Inventario local offline-first", style = MaterialTheme.typography.titleLarge)
+        Text(state.ultimaSincronizacion, style = MaterialTheme.typography.bodySmall)
+        state.avisoRed?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        Button(onClick = onReintentar, enabled = !state.sincronizando, modifier = Modifier.fillMaxWidth()) {
+            Text(if (state.sincronizando) "SINCRONIZANDO..." else "SINCRONIZAR AHORA")
+        }
         when (val fase = state.fase) {
             ProductoFase.Cargando -> Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -71,6 +76,7 @@ fun ProductoScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(producto.nombre, style = MaterialTheme.typography.titleMedium)
                         Text("${producto.precio} · Stock: ${producto.stock}")
+                        if (producto.pendiente) Text("PENDIENTE DE SINCRONIZAR", color = MaterialTheme.colorScheme.tertiary)
                     }
                     if (producto.requiereReposicion) {
                         Text("REPONER", color = MaterialTheme.colorScheme.error)

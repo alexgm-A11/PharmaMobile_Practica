@@ -18,13 +18,14 @@ import pe.edu.upeu.pharmamobile.domain.usecase.RecuperarSesionUseCase
 data class UsuarioSesionUi(
     val usuario: String,
     val nombreCompleto: String,
-    val permisos: Set<String>
+    val permisos: Set<String>,
+    val modoOffline: Boolean = false
 ) {
     fun puede(permiso: String): Boolean = permiso in permisos
 
     companion object {
         fun desde(sesion: Sesion) = UsuarioSesionUi(
-            sesion.usuario, sesion.nombreCompleto, sesion.permisos
+            sesion.usuario, sesion.nombreCompleto, sesion.permisos, sesion.modoOffline
         )
     }
 }

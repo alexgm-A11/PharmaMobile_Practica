@@ -9,7 +9,7 @@ class ScreenTest {
     fun contieneLosDestinosDeServidorYDemostracionEnOrden() {
         assertEquals(
             listOf("Inicio", "Productos PharmaSoft", "Clientes PharmaSoft", "Pedidos",
-                "Inventario local (demo)", "Clientes locales (demo)", "Catálogo público (Platzi)"),
+                "Productos (offline-first)", "Clientes locales (demo)", "Catálogo público (Platzi)"),
             Screen.destinos.map(::tituloPantalla)
         )
     }
@@ -28,6 +28,14 @@ class ScreenTest {
             listOf(Screen.Inicio, Screen.ProductosServidor, Screen.ClientesServidor,
                 Screen.Pedidos, Screen.Productos, Screen.Clientes, Screen.Catalogo),
             destinosPermitidos(setOf("CATALOGO_LEER", "CLIENTES_LEER", "VENTAS_LEER"))
+        )
+    }
+
+    @Test
+    fun modo_offline_solo_permite_inicio_e_inventario_local() {
+        assertEquals(
+            listOf(Screen.Inicio, Screen.Productos),
+            destinosOffline(setOf("CATALOGO_LEER", "CATALOGO_ESCRIBIR", "CLIENTES_LEER", "VENTAS_LEER"))
         )
     }
 }

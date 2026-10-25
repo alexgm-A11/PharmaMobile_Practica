@@ -4,7 +4,7 @@ import pe.edu.upeu.pharmamobile.domain.model.Permisos
 
 sealed class Screen(val titulo: String) {
     data object Inicio : Screen("Inicio")
-    data object Productos : Screen("Inventario local (demo)")
+    data object Productos : Screen("Productos (offline-first)")
     data object ProductosServidor : Screen("Productos PharmaSoft")
     data object Catalogo : Screen("Catálogo público (Platzi)")
     data object Clientes : Screen("Clientes locales (demo)")
@@ -29,3 +29,7 @@ fun destinosPermitidos(permisos: Set<String>): List<Screen> = Screen.destinos.fi
         else -> true
     }
 }
+
+/** En modo sin conexión solo se exponen la portada y el inventario local. */
+fun destinosOffline(permisos: Set<String>): List<Screen> = destinosPermitidos(permisos)
+    .filter { it == Screen.Inicio || it == Screen.Productos }

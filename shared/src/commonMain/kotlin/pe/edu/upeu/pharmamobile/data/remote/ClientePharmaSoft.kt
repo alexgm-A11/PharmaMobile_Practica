@@ -68,6 +68,7 @@ fun crearClientePharmaSoft(
                     HttpStatusCode.Unauthorized -> {
                         if (!solicitud.url.encodedPath.endsWith("/auth/login")) {
                             almacen.borrarToken()
+                            almacen.borrarPerfilSesion()
                             eventos.expirar()
                             throw SesionException(ErrorSesion.SesionExpirada)
                         }

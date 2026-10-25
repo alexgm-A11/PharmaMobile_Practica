@@ -12,6 +12,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
 import pe.edu.upeu.pharmamobile.data.local.AlmacenSeguro
+import pe.edu.upeu.pharmamobile.data.local.PerfilSesionOffline
 import pe.edu.upeu.pharmamobile.data.remote.dto.LoginRequestDto
 import pe.edu.upeu.pharmamobile.data.remote.dto.LoginResponseDto
 import pe.edu.upeu.pharmamobile.data.remote.dto.UsuarioActualDto
@@ -34,6 +35,7 @@ class AuthRepositorioRest(
             }.body()
             if (dto.token.isBlank()) throw SesionException(ErrorSesion.SinConexion)
             almacen.guardarToken(dto.token)
+            almacen.guardarPerfilSesion(PerfilSesionOffline(dto.username, dto.nombreCompleto, dto.permisos.toSet()))
             cliente.authProvider<BearerAuthProvider>()?.clearToken()
             return Sesion(dto.token, dto.username, dto.nombreCompleto, dto.permisos.toSet())
         } catch (error: CancellationException) {
@@ -54,18 +56,35 @@ class AuthRepositorioRest(
         val token = almacen.leerToken()?.takeIf(String::isNotBlank) ?: return null
         try {
             val dto: UsuarioActualDto = cliente.get("auth/me").body()
+            val perfil = PerfilSesionOffline(dto.username, dto.nombreCompleto, dto.permisos.toSet())
+            almacen.guardarPerfilSesion(perfil)
             return Sesion(token, dto.username, dto.nombreCompleto, dto.permisos.toSet())
         } catch (error: CancellationException) {
             throw error
         } catch (error: SesionException) {
             throw error
+        } catch (error: ClientRequestException) {
+            if (error.response.status == HttpStatusCode.Unauthorized) {
+                almacen.borrarToken()
+                almacen.borrarPerfilSesion()
+                throw SesionException(ErrorSesion.SesionExpirada)
+            }
+            if (error.response.status == HttpStatusCode.Forbidden) {
+                throw SesionException(ErrorSesion.SinPermiso)
+            }
+            return perfilOffline(token) ?: throw SesionException(ErrorSesion.SinConexion)
         } catch (error: Exception) {
-            throw SesionException(ErrorSesion.SinConexion)
+            return perfilOffline(token) ?: throw SesionException(ErrorSesion.SinConexion)
         }
     }
 
     override suspend fun cerrarSesion() {
         almacen.borrarToken()
+        almacen.borrarPerfilSesion()
         cliente.authProvider<BearerAuthProvider>()?.clearToken()
+    }
+
+    private fun perfilOffline(token: String): Sesion? = almacen.leerPerfilSesion()?.let {
+        Sesion(token, it.usuario, it.nombreCompleto, it.permisos, modoOffline = true)
     }
 }
