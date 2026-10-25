@@ -6,6 +6,15 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.sqldelight)
+}
+
+sqldelight {
+    databases {
+        create("PharmaDb") {
+            packageName.set("pe.edu.upeu.pharmamobile.db")
+        }
+    }
 }
 
 kotlin {
@@ -42,6 +51,7 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            implementation(libs.sqldelight.android)
             implementation(libs.ktor.client.cio)
             implementation(libs.androidx.security.crypto)
             implementation(libs.compose.uiToolingPreview)
@@ -49,6 +59,8 @@ kotlin {
             implementation(libs.koin.android)
         }
         commonMain.dependencies {
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.serialization.json)
@@ -68,12 +80,14 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
         }
         commonTest.dependencies {
+            implementation(libs.sqldelight.jvm)
             implementation(libs.ktor.client.mock)
             implementation(libs.kotlin.test)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            implementation(libs.sqldelight.native)
         }
     }
 }

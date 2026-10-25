@@ -4,7 +4,8 @@ data class Producto(
     val id: Long,
     val nombre: String,
     val precio: Double,
-    val stock: Int
+    val stock: Int,
+    val pendiente: Boolean = false
 ) {
     val requiereReposicion: Boolean
         get() = stock < STOCK_MINIMO

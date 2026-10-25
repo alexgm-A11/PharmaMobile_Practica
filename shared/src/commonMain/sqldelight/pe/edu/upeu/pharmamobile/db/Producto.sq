@@ -1,0 +1,38 @@
+CREATE TABLE producto (
+    id INTEGER NOT NULL PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    precio REAL NOT NULL,
+    stock INTEGER NOT NULL,
+    pendiente INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE sincronizacion (
+    clave TEXT NOT NULL PRIMARY KEY,
+    instante INTEGER NOT NULL
+);
+
+listarTodos:
+SELECT * FROM producto ORDER BY nombre ASC;
+
+listarPendientes:
+SELECT * FROM producto WHERE pendiente = 1 ORDER BY id ASC;
+
+insertar:
+INSERT OR REPLACE INTO producto(id, nombre, precio, stock, pendiente)
+VALUES (?, ?, ?, ?, ?);
+
+borrarSincronizados:
+DELETE FROM producto WHERE pendiente = 0;
+
+siguienteIdLocal:
+SELECT COALESCE(MIN(id), 0) FROM producto;
+
+eliminarPorId:
+DELETE FROM producto WHERE id = ?;
+
+guardarUltimaSincronizacion:
+INSERT OR REPLACE INTO sincronizacion(clave, instante)
+VALUES ('ultima_correcta', ?);
+
+leerUltimaSincronizacion:
+SELECT instante FROM sincronizacion WHERE clave = 'ultima_correcta';

@@ -1,11 +1,16 @@
 package pe.edu.upeu.pharmamobile.di
 
+import pe.edu.upeu.pharmamobile.db.PharmaDb
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
-import pe.edu.upeu.pharmamobile.data.repository.ProductoRepositorioEnMemoria
+import pe.edu.upeu.pharmamobile.data.local.ProductoLocal
+import pe.edu.upeu.pharmamobile.data.repository.ProductoRepositorioOffline
+import pe.edu.upeu.pharmamobile.data.repository.PharmaSoftProductosRemotos
+import pe.edu.upeu.pharmamobile.data.repository.ProductosRemotos
+import pe.edu.upeu.pharmamobile.data.local.CreadorDeDriver
 import pe.edu.upeu.pharmamobile.data.repository.ProductoCatalogoRepositorioRest
 import pe.edu.upeu.pharmamobile.data.remote.ProductoApi
 import pe.edu.upeu.pharmamobile.data.remote.DiagnosticoConexionApi
@@ -46,11 +51,14 @@ val dataModule = module {
     }
     single<AuthRepository> { AuthRepositorioRest(get(named("pharmasoft")), get()) }
     single<PharmaSoftRepository> { PharmaSoftRepositorioRest(get(named("pharmasoft"))) }
+    single { PharmaDb(get<CreadorDeDriver>().crear()) }
+    single { ProductoLocal(get()) }
+    single<ProductosRemotos> { PharmaSoftProductosRemotos(get()) }
     single { crearClienteProductos() }
     single { ProductoApi(get()) }
     single { DiagnosticoConexionApi(get()) }
     single<ProductoCatalogoRepository> { ProductoCatalogoRepositorioRest(get()) }
-    single<ProductoRepository> { ProductoRepositorioEnMemoria() }
+    single<ProductoRepository> { ProductoRepositorioOffline(get(), get()) }
     single<ClienteRepository> { ClienteRepositorioEnMemoria() }
 }
 val domainModule = module {
