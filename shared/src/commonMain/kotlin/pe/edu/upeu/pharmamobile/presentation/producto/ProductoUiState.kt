@@ -16,13 +16,16 @@ data class ProductoUi(
     val precio: String,
     val stock: Int,
     val requiereReposicion: Boolean,
-    val pendiente: Boolean = false
+    val pendiente: Boolean = false,
+    val intentos: Int = 0,
+    val ultimoError: String? = null
 ) {
     companion object {
         fun from(producto: Producto): ProductoUi {
             return ProductoUi(
                 producto.id, producto.nombre, formatearSoles(producto.precio),
-                producto.stock, producto.requiereReposicion, producto.pendiente
+                producto.stock, producto.requiereReposicion, producto.pendiente,
+                producto.intentos, producto.ultimoError
             )
         }
     }
@@ -44,5 +47,7 @@ data class ProductoUiState(
     val mensaje: String? = null,
     val sincronizando: Boolean = false,
     val avisoRed: String? = null,
-    val ultimaSincronizacion: String = "Nunca sincronizado"
+    val ultimaSincronizacion: String = "Nunca sincronizado",
+    val pendientes: Int = 0,
+    val fallidas: Int = 0
 )

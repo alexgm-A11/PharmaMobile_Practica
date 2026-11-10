@@ -57,6 +57,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
             implementation(libs.koin.android)
+            implementation(libs.firebase.crashlytics.gitlive)
+            implementation(libs.firebase.messaging.gitlive)
         }
         commonMain.dependencies {
             implementation(libs.sqldelight.runtime)

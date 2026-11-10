@@ -57,6 +57,8 @@ import pe.edu.upeu.pharmamobile.presentation.pharmasoft.ProductosServidorViewMod
 import pe.edu.upeu.pharmamobile.presentation.pharmasoft.ClientesServidorScreen
 import pe.edu.upeu.pharmamobile.presentation.pharmasoft.ClientesServidorViewModel
 import pe.edu.upeu.pharmamobile.ui.theme.PharmaMobilTheme
+import pe.edu.upeu.pharmamobile.presentation.permiso.PermisosScreen
+import pe.edu.upeu.pharmamobile.presentation.permiso.PermisosViewModel
 
 @Composable
 @Preview
@@ -214,6 +216,7 @@ private fun PharmaMobilApp(
                             onRegistrar = viewModel::guardar,
                             onReintentar = viewModel::cargarProductos,
                             onDetalle = { pantallaActual = Screen.DetalleProducto(it) },
+                            onReintentarFallidas = viewModel::reintentarFallidas,
                             puedeRegistrar = usuario.puede(Permisos.CATALOGO_ESCRIBIR)
                         )
                     }
@@ -236,6 +239,16 @@ private fun PharmaMobilApp(
                         )
                     }
                     Screen.Pedidos -> PedidoScreen()
+                    Screen.Permisos -> {
+                        val viewModel = koinViewModel<PermisosViewModel>()
+                        val state by viewModel.uiState.collectAsStateWithLifecycle()
+                        PermisosScreen(
+                            state,
+                            onSolicitar = { viewModel.solicitar(it) },
+                            onAbrirAjustes = { viewModel.abrirAjustes() },
+                            onActualizar = { viewModel.actualizarEstados() }
+                        )
+                    }
                     is Screen.DetalleProducto -> {
                         val viewModel = koinViewModel<DetalleProductoViewModel>()
                         val state by viewModel.uiState.collectAsStateWithLifecycle()

@@ -3,7 +3,9 @@ CREATE TABLE producto (
     nombre TEXT NOT NULL,
     precio REAL NOT NULL,
     stock INTEGER NOT NULL,
-    pendiente INTEGER NOT NULL DEFAULT 0
+    pendiente INTEGER NOT NULL DEFAULT 0,
+    intentos INTEGER NOT NULL DEFAULT 0,
+    ultimoError TEXT
 );
 
 CREATE TABLE sincronizacion (
@@ -15,11 +17,26 @@ listarTodos:
 SELECT * FROM producto ORDER BY nombre ASC;
 
 listarPendientes:
-SELECT * FROM producto WHERE pendiente = 1 ORDER BY id ASC;
+SELECT * FROM producto WHERE pendiente = 1 AND intentos < ? ORDER BY id ASC;
+
+observarPendientes:
+SELECT COUNT(*) FROM producto WHERE pendiente = 1 AND intentos < ?;
+
+observarFallidas:
+SELECT COUNT(*) FROM producto WHERE pendiente = 1 AND intentos >= ?;
 
 insertar:
-INSERT OR REPLACE INTO producto(id, nombre, precio, stock, pendiente)
-VALUES (?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO producto(id, nombre, precio, stock, pendiente, intentos, ultimoError)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+sumarIntento:
+UPDATE producto SET intentos = intentos + 1, ultimoError = ? WHERE id = ?;
+
+marcarFallida:
+UPDATE producto SET intentos = ?, ultimoError = ? WHERE id = ?;
+
+reiniciarFallidas:
+UPDATE producto SET intentos = 0, ultimoError = NULL WHERE pendiente = 1 AND intentos >= ?;
 
 borrarSincronizados:
 DELETE FROM producto WHERE pendiente = 0;
@@ -29,6 +46,9 @@ SELECT COALESCE(MIN(id), 0) FROM producto;
 
 eliminarPorId:
 DELETE FROM producto WHERE id = ?;
+
+productoPorId:
+SELECT * FROM producto WHERE id = ?;
 
 guardarUltimaSincronizacion:
 INSERT OR REPLACE INTO sincronizacion(clave, instante)

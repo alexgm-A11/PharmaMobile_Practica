@@ -10,11 +10,12 @@ sealed class Screen(val titulo: String) {
     data object Clientes : Screen("Clientes locales (demo)")
     data object ClientesServidor : Screen("Clientes PharmaSoft")
     data object Pedidos : Screen("Pedidos")
+    data object Permisos : Screen("Permisos del dispositivo")
     data class DetalleProducto(val id: Long) : Screen("Detalle del producto")
 
     companion object {
         val destinos: List<Screen>
-            get() = listOf(Inicio, ProductosServidor, ClientesServidor, Pedidos, Productos, Clientes, Catalogo)
+            get() = listOf(Inicio, ProductosServidor, ClientesServidor, Pedidos, Productos, Clientes, Catalogo, Permisos)
     }
 }
 
@@ -32,4 +33,4 @@ fun destinosPermitidos(permisos: Set<String>): List<Screen> = Screen.destinos.fi
 
 /** En modo sin conexión solo se exponen la portada y el inventario local. */
 fun destinosOffline(permisos: Set<String>): List<Screen> = destinosPermitidos(permisos)
-    .filter { it == Screen.Inicio || it == Screen.Productos }
+    .filter { it == Screen.Inicio || it == Screen.Productos || it == Screen.Permisos }

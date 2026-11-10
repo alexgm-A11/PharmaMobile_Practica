@@ -6,17 +6,22 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pe.edu.upeu.pharmamobile.data.local.epochMillisNow
 import pe.edu.upeu.pharmamobile.domain.repository.ProductoRepository
+import pe.edu.upeu.pharmamobile.domain.port.Telemetria
 import pe.edu.upeu.pharmamobile.domain.usecase.CampoProducto
 import pe.edu.upeu.pharmamobile.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobile.domain.usecase.SincronizarProductosUseCase
 import pe.edu.upeu.pharmamobile.domain.usecase.ValidacionProductoException
 
 class ProductoViewModel(
     private val registrarProducto: RegistrarProductoUseCase,
-    private val repository: ProductoRepository
+    private val repository: ProductoRepository,
+    private val sincronizarProductos: SincronizarProductosUseCase,
+    private val telemetria: Telemetria
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProductoUiState())
     val uiState = _uiState.asStateFlow()
@@ -34,6 +39,15 @@ class ProductoViewModel(
                 }
             }
         }
+        viewModelScope.launch {
+            combine(
+                repository.observarPendientes(SincronizarProductosUseCase.MAX_INTENTOS),
+                repository.observarFallidas(SincronizarProductosUseCase.MAX_INTENTOS)
+            ) { pendientes, fallidas -> pendientes to fallidas }
+                .collect { (pendientes, fallidas) ->
+                    _uiState.update { it.copy(pendientes = pendientes, fallidas = fallidas) }
+                }
+        }
         sincronizar()
     }
 
@@ -45,20 +59,31 @@ class ProductoViewModel(
         val formulario = _uiState.value.formulario
         viewModelScope.launch {
             _uiState.update { it.copy(guardando = true, mensaje = null) }
-            registrarProducto(formulario.nombre, formulario.precio, formulario.stock)
-                .onSuccess { producto ->
+            val resultado = registrarProducto(formulario.nombre, formulario.precio, formulario.stock)
+            resultado.fold(
+                onSuccess = { producto ->
+                    _uiState.update { it.copy(formulario = ProductoFormularioState()) }
+                    val resumen = try {
+                        sincronizarProductos()
+                    } catch (cancelado: CancellationException) {
+                        throw cancelado
+                    } catch (error: Exception) {
+                        telemetria.registrarError(error, mapOf("screen" to "inventory", "operation" to "create_sync"))
+                        null
+                    }
                     _uiState.update {
                         it.copy(
-                            formulario = ProductoFormularioState(),
                             guardando = false,
-                            mensaje = if (producto.pendiente) {
-                                "${producto.nombre} guardado en el dispositivo; pendiente de sincronizar."
-                            } else "Producto registrado y sincronizado: ${producto.nombre}"
+                            mensaje = if (resumen != null && resumen.pendientes == 0 && resumen.fallidas == 0) {
+                                "Producto registrado y sincronizado: ${producto.nombre}"
+                            } else {
+                                "${producto.nombre} guardado localmente. Pendientes: ${resumen?.pendientes ?: it.pendientes}. Revisa los cambios fallidos antes de reenviar."
+                            }
                         )
                     }
                     cargarUltimaSincronizacion()
-                }
-                .onFailure { error ->
+                },
+                onFailure = { error ->
                     val validacion = error as? ValidacionProductoException
                     _uiState.update {
                         it.copy(
@@ -72,6 +97,7 @@ class ProductoViewModel(
                         )
                     }
                 }
+            )
         }
     }
 
@@ -81,11 +107,21 @@ class ProductoViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(sincronizando = true, avisoRed = null) }
             try {
-                repository.sincronizar()
-                _uiState.update { it.copy(sincronizando = false, avisoRed = null) }
+                val resumen = sincronizarProductos()
+                _uiState.update {
+                    it.copy(
+                        sincronizando = false,
+                        avisoRed = when {
+                            resumen.fallidas > 0 -> "${resumen.fallidas} cambio(s) requieren revisión antes de reenviar."
+                            resumen.pendientes > 0 -> "Sin conexión: ${resumen.pendientes} cambio(s) por enviar."
+                            else -> null
+                        }
+                    )
+                }
             } catch (cancelado: CancellationException) {
                 throw cancelado
-            } catch (_: Exception) {
+            } catch (error: Exception) {
+                telemetria.registrarError(error, mapOf("screen" to "inventory", "operation" to "sync"))
                 _uiState.update {
                     it.copy(
                         sincronizando = false,
@@ -94,6 +130,13 @@ class ProductoViewModel(
                 }
             }
             cargarUltimaSincronizacion()
+        }
+    }
+
+    fun reintentarFallidas() {
+        viewModelScope.launch {
+            repository.reintentarFallidas(SincronizarProductosUseCase.MAX_INTENTOS)
+            sincronizar()
         }
     }
 

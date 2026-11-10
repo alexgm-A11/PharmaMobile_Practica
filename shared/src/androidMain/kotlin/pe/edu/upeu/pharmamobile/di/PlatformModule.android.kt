@@ -10,9 +10,16 @@ import pe.edu.upeu.pharmamobile.data.local.CreadorDeDriverAndroid
 import pe.edu.upeu.pharmamobile.data.remote.ConfiguracionPharmaSoft
 import pe.edu.upeu.pharmamobile.domain.platform.Compartidor
 import pe.edu.upeu.pharmamobile.platform.CompartidorAndroid
+import pe.edu.upeu.pharmamobile.platform.permiso.GestorPermisosAndroid
+import pe.edu.upeu.pharmamobile.domain.permiso.GestorPermisos
+import pe.edu.upeu.pharmamobile.domain.port.Telemetria
+import pe.edu.upeu.pharmamobile.data.firebase.TelemetriaFirebaseAndroid
 
 actual val platformModule = module {
     single<Compartidor> { CompartidorAndroid(androidContext()) }
+    single { GestorPermisosAndroid(androidContext()) }
+    single<GestorPermisos> { get<GestorPermisosAndroid>() }
+    single<Telemetria> { TelemetriaFirebaseAndroid(androidContext()) }
     single<AlmacenSeguro> { AlmacenSeguroAndroid(androidContext()) }
     single<CreadorDeDriver> { CreadorDeDriverAndroid(androidContext()) }
     single {

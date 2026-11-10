@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>PharmaMobil necesita la cámara para funciones de captura de información de productos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>PharmaMobil usa la ubicación solo mientras la aplicación está abierta para funciones contextuales.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>

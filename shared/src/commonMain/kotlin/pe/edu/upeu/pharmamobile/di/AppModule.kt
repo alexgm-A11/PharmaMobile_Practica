@@ -39,10 +39,12 @@ import pe.edu.upeu.pharmamobile.domain.usecase.ListarClientesUseCase
 import pe.edu.upeu.pharmamobile.domain.usecase.ListarProductosUseCase
 import pe.edu.upeu.pharmamobile.domain.usecase.RegistrarClienteUseCase
 import pe.edu.upeu.pharmamobile.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobile.domain.usecase.SincronizarProductosUseCase
 import pe.edu.upeu.pharmamobile.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobile.presentation.catalogo.CatalogoViewModel
 import pe.edu.upeu.pharmamobile.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobile.presentation.detalle.DetalleProductoViewModel
+import pe.edu.upeu.pharmamobile.presentation.permiso.PermisosViewModel
 
 val dataModule = module {
     single { EventosSesion() }
@@ -58,7 +60,9 @@ val dataModule = module {
     single { ProductoApi(get()) }
     single { DiagnosticoConexionApi(get()) }
     single<ProductoCatalogoRepository> { ProductoCatalogoRepositorioRest(get()) }
-    single<ProductoRepository> { ProductoRepositorioOffline(get(), get()) }
+    single { ProductoRepositorioOffline(get(), get()) }
+    single<ProductoRepository> { get<ProductoRepositorioOffline>() }
+    single<pe.edu.upeu.pharmamobile.domain.repository.SincronizacionProductosRepository> { get<ProductoRepositorioOffline>() }
     single<ClienteRepository> { ClienteRepositorioEnMemoria() }
 }
 val domainModule = module {
@@ -67,6 +71,7 @@ val domainModule = module {
     factory { CerrarSesionUseCase(get()) }
     factory { GestionPharmaSoftUseCase(get()) }
     factory { RegistrarProductoUseCase(get()) }
+    factory { SincronizarProductosUseCase(get()) }
     factory { ListarProductosUseCase(get()) }
     factory { RegistrarClienteUseCase(get()) }
     factory { ListarClientesUseCase(get()) }
@@ -76,9 +81,10 @@ val presentationModule = module {
     viewModel { ProductosServidorViewModel(get()) }
     viewModel { ClientesServidorViewModel(get()) }
     viewModel { CatalogoViewModel(get(), get()) }
-    viewModel { ProductoViewModel(get(), get()) }
+    viewModel { ProductoViewModel(get(), get(), get(), get()) }
     viewModel { DetalleProductoViewModel(get(), get()) }
     viewModel { ClienteViewModel(get(), get()) }
+    viewModel { PermisosViewModel(get()) }
 }
 
 expect val platformModule: Module

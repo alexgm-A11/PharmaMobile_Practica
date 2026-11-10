@@ -15,13 +15,23 @@ class ProductoLocal(base: PharmaDb) {
     fun observar(): Flow<List<Producto>> = consultas.listarTodos()
         .asFlow()
         .mapToList(Dispatchers.Default)
-        .map { filas -> filas.map { Producto(it.id, it.nombre, it.precio, it.stock.toInt(), it.pendiente == 1L) } }
+        .map { filas -> filas.map { Producto(it.id, it.nombre, it.precio, it.stock.toInt(), it.pendiente == 1L, it.intentos.toInt(), it.ultimoError) } }
 
     fun listar(): List<Producto> = consultas.listarTodos().executeAsList()
-        .map { Producto(it.id, it.nombre, it.precio, it.stock.toInt(), it.pendiente == 1L) }
+        .map { Producto(it.id, it.nombre, it.precio, it.stock.toInt(), it.pendiente == 1L, it.intentos.toInt(), it.ultimoError) }
 
-    fun pendientes(): List<Producto> = consultas.listarPendientes().executeAsList()
-        .map { Producto(it.id, it.nombre, it.precio, it.stock.toInt(), pendiente = true) }
+    fun pendientes(maxIntentos: Int): List<Producto> = consultas.listarPendientes(maxIntentos.toLong()).executeAsList()
+        .map { Producto(it.id, it.nombre, it.precio, it.stock.toInt(), pendiente = true, intentos = it.intentos.toInt(), ultimoError = it.ultimoError) }
+
+    fun porId(id: Long): Producto? = consultas.productoPorId(id).executeAsOneOrNull()?.let {
+        Producto(it.id, it.nombre, it.precio, it.stock.toInt(), it.pendiente == 1L, it.intentos.toInt(), it.ultimoError)
+    }
+
+    fun observarPendientes(maxIntentos: Int): Flow<Int> = consultas.observarPendientes(maxIntentos.toLong())
+        .asFlow().mapToList(Dispatchers.Default).map { it.single().toInt() }
+
+    fun observarFallidas(maxIntentos: Int): Flow<Int> = consultas.observarFallidas(maxIntentos.toLong())
+        .asFlow().mapToList(Dispatchers.Default).map { it.single().toInt() }
 
     fun guardarPendiente(producto: Producto): Producto {
         val menor = consultas.siguienteIdLocal().executeAsOne()
@@ -33,15 +43,25 @@ class ProductoLocal(base: PharmaDb) {
     fun confirmarPendiente(idLocal: Long, productoServidor: Producto) {
         consultas.transaction {
             consultas.eliminarPorId(idLocal)
-            insertar(productoServidor.copy(pendiente = false))
+            insertar(productoServidor.copy(pendiente = false, intentos = 0, ultimoError = null))
         }
     }
+
+    fun sumarIntento(idLocal: Long, error: String): Int {
+        consultas.sumarIntento(error, idLocal)
+        return consultas.productoPorId(idLocal).executeAsOne().intentos.toInt()
+    }
+
+    fun marcarFallida(idLocal: Long, error: String, maxIntentos: Int) =
+        consultas.marcarFallida(maxIntentos.toLong(), error, idLocal)
+
+    fun reiniciarFallidas(maxIntentos: Int) = consultas.reiniciarFallidas(maxIntentos.toLong())
 
     /** Solo reemplaza filas ya sincronizadas; el trabajo offline se conserva. */
     fun reemplazarSincronizados(productos: List<Producto>) {
         consultas.transaction {
             consultas.borrarSincronizados()
-            productos.forEach { insertar(it.copy(pendiente = false)) }
+            productos.forEach { insertar(it.copy(pendiente = false, intentos = 0, ultimoError = null)) }
         }
     }
 
@@ -56,6 +76,8 @@ class ProductoLocal(base: PharmaDb) {
         nombre = producto.nombre,
         precio = producto.precio,
         stock = producto.stock.toLong(),
-        pendiente = if (producto.pendiente) 1L else 0L
+        pendiente = if (producto.pendiente) 1L else 0L,
+        intentos = producto.intentos.toLong(),
+        ultimoError = producto.ultimoError
     )
 }

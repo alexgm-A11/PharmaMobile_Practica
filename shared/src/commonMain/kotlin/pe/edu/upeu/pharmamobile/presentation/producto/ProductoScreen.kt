@@ -32,6 +32,7 @@ fun ProductoScreen(
     onRegistrar: () -> Unit,
     onReintentar: () -> Unit,
     onDetalle: (Long) -> Unit,
+    onReintentarFallidas: () -> Unit,
     puedeRegistrar: Boolean = true
 ) {
     val formulario = state.formulario
@@ -52,6 +53,16 @@ fun ProductoScreen(
         state.mensaje?.let { MensajeExito(it) }
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
         Text("Inventario local offline-first", style = MaterialTheme.typography.titleLarge)
+        Text("Pendientes por enviar: ${state.pendientes}", style = MaterialTheme.typography.bodyMedium)
+        if (state.fallidas > 0) {
+            Text(
+                "Cambios fallidos: ${state.fallidas}. Revisa el error antes de volver a enviarlos.",
+                color = MaterialTheme.colorScheme.error
+            )
+            Button(onClick = onReintentarFallidas, enabled = !state.sincronizando, modifier = Modifier.fillMaxWidth()) {
+                Text("REINTENTAR CAMBIOS FALLIDOS")
+            }
+        }
         Text(state.ultimaSincronizacion, style = MaterialTheme.typography.bodySmall)
         state.avisoRed?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Button(onClick = onReintentar, enabled = !state.sincronizando, modifier = Modifier.fillMaxWidth()) {
@@ -77,6 +88,7 @@ fun ProductoScreen(
                         Text(producto.nombre, style = MaterialTheme.typography.titleMedium)
                         Text("${producto.precio} · Stock: ${producto.stock}")
                         if (producto.pendiente) Text("PENDIENTE DE SINCRONIZAR", color = MaterialTheme.colorScheme.tertiary)
+                        producto.ultimoError?.let { error -> Text("Último error: $error", color = MaterialTheme.colorScheme.error) }
                     }
                     if (producto.requiereReposicion) {
                         Text("REPONER", color = MaterialTheme.colorScheme.error)
