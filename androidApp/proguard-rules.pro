@@ -19,3 +19,13 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Modelos DTO serializados por kotlinx.serialization.
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-keep class pe.edu.upeu.pharmamobile.data.remote.dto.** { *; }
+-keepclassmembers class **$$serializer { *; }
+-keepclassmembers class **$Companion { kotlinx.serialization.KSerializer serializer(...); }
+-keep class kotlinx.serialization.** { *; }
+
+# Los módulos Koin se construyen explícitamente, pero se conservan los puntos de entrada.
+-keep class pe.edu.upeu.pharmamobile.di.** { *; }

@@ -17,3 +17,8 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+keystore.properties
+*.jks
+*.keystore
+androidApp/google-services.json
+iosApp/iosApp/GoogleService-Info.plist

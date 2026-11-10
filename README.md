@@ -2,6 +2,16 @@
 
 Aplicación de práctica con Android e iOS. El código común contiene inicio, productos del inventario local, clientes, pedidos demostrativos y catálogo REST separado. El proyecto usa Compose Multiplatform, Clean + MVVM, Koin, corrutinas y Ktor.
 
+## Sesiones 13–14: integrador y distribución
+
+La sesión 13 incorpora control durable de sincronización (intentos, error y estados pendientes/fallidos), reintentos exponenciales limitados, pantalla de estado y contratos de permisos/telemetría por capas. El adaptador Android de Crashlytics queda preparado pero necesita el archivo real `androidApp/google-services.json`; no se incluye configuración Firebase ni secretos. El puente de permisos iOS queda pendiente.
+
+La sesión 14 configura `versionCode = 1`, `versionName = 1.0.0`, R8 y firma Release con un JKS fuera del repositorio. Los builds locales entregados son `output/android/Alexander_Guillen_Mendoza_ProyectoFinal_Android.apk` y `.aab`. El certificado del APK se verificó con SHA-256 `bbea15b5315bd1c594334069b5bd7d14db356a0a1c72485f03fad445a553d76d`. La llave permanece fuera de Git; véase `keystore.properties.example` y respáldese el JKS junto a sus credenciales.
+
+Verificación en Windows: `./gradlew.bat :androidApp:compileDebugKotlin :shared:testAndroidHostTest :shared:compileKotlinIosSimulatorArm64 :androidApp:bundleRelease :androidApp:assembleRelease`. La suite agregada `:shared:allTests` incluye resolución del driver SQLite JVM para iOS y no es ejecutable en este host; las pruebas Android Host sí pasan. No había emulador ni dispositivos físicos conectados. iOS Archive/IPA, validación Firebase y pruebas en dos Android físicos aún requieren sus respectivos equipos/configuraciones. El tag final debe crearse después de integrar la rama de trabajo en `develop`.
+
+Consulta [docs/S13_INTEGRADOR.md](docs/S13_INTEGRADOR.md), [docs/S14_BUILDS_FIRMADOS.md](docs/S14_BUILDS_FIRMADOS.md), [docs/GUIA_INSTALACION_Y_CHECKLIST.md](docs/GUIA_INSTALACION_Y_CHECKLIST.md) y [docs/MATRIZ_PRUEBAS_DISPOSITIVOS.md](docs/MATRIZ_PRUEBAS_DISPOSITIVOS.md). El informe actualizado está en `output/pdf/Informe_Actualizado_PharmaMobile_Sesiones_13_14_Guillen_Mendoza.pdf`.
+
 ## Persistencia offline-first (Sesión 11)
 
 La rama `feature/offline-first-guillen` implementa el inventario con SQLDelight 2.1.0. `PharmaDb` y `Producto.sq` viven en `shared/src/commonMain/sqldelight`; `ProductoLocal` es la única capa que conoce las consultas. El driver es Android SQLite en Android y SQLite nativo en iOS, ambos registrados por Koin. En `commonTest` se usa SQLite JDBC en memoria.
